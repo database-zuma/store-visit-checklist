@@ -3416,6 +3416,20 @@
 
             const createdAt = new Date().toISOString();
 
+            // Show loading
+            const saveBtn = document.querySelector('.btn-primary[onclick="saveVisit()"]');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '⏳ Menyimpan...';
+            saveBtn.disabled = true;
+
+            // Generate PDF
+            let pdfBase64 = '';
+            try {
+                pdfBase64 = generatePdfBase64(formNo, storeName, visitDate, visitorName, areaName, score, comment);
+            } catch (e) {
+                console.log('PDF generation error:', e);
+            }
+
             // Data to save
             const visitData = {
                 formNo,
@@ -3441,7 +3455,7 @@
             archive.unshift(visitData);
             localStorage.setItem('visit_archive', JSON.stringify(archive));
 
-            // Save to Google Sheets (async, don't wait)
+            // Save to Google Sheets with PDF
             try {
                 fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
@@ -3457,14 +3471,18 @@
                         areaName,
                         comment,
                         createdAt,
-                        answers: checklistAnswers
+                        pdfBase64
                     })
                 });
             } catch (e) {
                 console.log('Google Sheets sync error:', e);
             }
 
-            alert('Visit berhasil disimpan!');
+            // Restore button
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+
+            alert('Visit berhasil disimpan! PDF tersimpan di Google Drive.');
 
             if (confirm('Buat visit baru?')) {
                 resetForm();
@@ -3472,6 +3490,140 @@
 
             // Update dashboard
             initDashboard();
+        }
+
+        // Generate PDF and return as base64
+        function generatePdfBase64(formNo, storeName, visitDate, visitorName, areaName, score, comment) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFillColor(26, 26, 46);
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(formNo, 105, 30, { align: 'center' });
+
+            // Store Info
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(11);
+            let y = 45;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Store:', 15, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(storeName, 35, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Date:', 120, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y);
+            y += 7;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Visitor:', 15, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(visitorName, 35, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Area:', 120, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(areaName, 135, y);
+
+            // Visit Proof Info
+            if (visitProofData.timestamp) {
+                y += 7;
+                doc.setFont('helvetica', 'bold');
+                doc.text('Check-in:', 15, y);
+                doc.setFont('helvetica', 'normal');
+                const checkInTime = new Date(visitProofData.timestamp);
+                doc.text(checkInTime.toLocaleString('id-ID'), 35, y);
+            }
+            if (visitProofData.location) {
+                y += 7;
+                doc.setFont('helvetica', 'bold');
+                doc.text('GPS:', 15, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`${visitProofData.location.lat.toFixed(6)}, ${visitProofData.location.lng.toFixed(6)}`, 35, y);
+            }
+
+            // Score Box
+            y += 10;
+            const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
+            doc.setFillColor(...scoreColor);
+            doc.roundedRect(15, y, 40, 20, 3, 3, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${score}`, 35, y + 13, { align: 'center' });
+            doc.setFontSize(8);
+            doc.text(score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR', 35, y + 18, { align: 'center' });
+
+            // Checklist Table
+            y += 30;
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CHECKLIST RESULTS', 15, y);
+            y += 5;
+
+            doc.setFontSize(8);
+            const categories = [
+                { key: 'ambiance', name: 'STORE AMBIANCE' },
+                { key: 'display', name: 'DISPLAY' },
+                { key: 'admin', name: 'STORE ADMINISTRASI' },
+                { key: 'cleaning', name: 'STORE CLEANING' },
+                { key: 'spg', name: 'SPG' },
+                { key: 'stock', name: 'STOCK' }
+            ];
+
+            categories.forEach(cat => {
+                y += 6;
+                if (y > 270) { doc.addPage(); y = 20; }
+                doc.setFont('helvetica', 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(15, y - 4, 180, 6, 'F');
+                doc.text(cat.name, 17, y);
+                y += 4;
+
+                CHECKLIST_DATA[cat.key].forEach(item => {
+                    if (y > 280) { doc.addPage(); y = 20; }
+                    const answer = checklistAnswers[item.no] || '-';
+                    const answerColor = answer === 'yes' ? [40, 167, 69] : answer === 'no' ? [220, 53, 69] : [108, 117, 125];
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(`${item.no}.`, 17, y);
+
+                    const textLines = doc.splitTextToSize(item.text, 140);
+                    doc.text(textLines, 25, y);
+
+                    doc.setTextColor(...answerColor);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(answer.toUpperCase(), 175, y);
+
+                    y += textLines.length * 4 + 2;
+                });
+            });
+
+            // Comment
+            if (comment) {
+                y += 5;
+                if (y > 260) { doc.addPage(); y = 20; }
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COMMENT:', 15, y);
+                y += 5;
+                doc.setFont('helvetica', 'normal');
+                const commentLines = doc.splitTextToSize(comment, 180);
+                doc.text(commentLines, 15, y);
+            }
+
+            // Return as base64 (remove data:application/pdf;base64, prefix)
+            const pdfOutput = doc.output('datauristring');
+            return pdfOutput.split(',')[1];
         }
 
         // ========================================
