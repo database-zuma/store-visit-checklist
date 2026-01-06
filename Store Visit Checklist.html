@@ -1,0 +1,3312 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Visit Checklist - Area Supervisor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+
+        /* Login Page */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e94560 0%, #d63050 100%);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .login-logo h1 {
+            color: #1a1a2e;
+            font-size: 1.5rem;
+        }
+
+        .login-logo p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .login-form label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .login-form input:focus {
+            border-color: #e94560;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #e94560 0%, #d63050 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+        }
+
+        .login-error {
+            background: #ffe0e0;
+            color: #c00;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            border-radius: 15px;
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            background: #e94560;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .header-title h1 {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+
+        .header-title p {
+            color: #a0a0a0;
+            font-size: 0.8rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 10px;
+        }
+
+        .user-info .avatar {
+            width: 35px;
+            height: 35px;
+            background: #e94560;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .user-info .user-detail {
+            color: white;
+        }
+
+        .user-info .user-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .user-info .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #e94560;
+        }
+
+        /* Dashboard Stats */
+        .dashboard-section {
+            margin-bottom: 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .dash-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dash-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .dash-card.primary::before { background: #e94560; }
+        .dash-card.success::before { background: #28a745; }
+        .dash-card.warning::before { background: #ffc107; }
+        .dash-card.info::before { background: #17a2b8; }
+
+        .dash-card .dash-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .dash-card .dash-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .dash-card .dash-label {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .dash-card .dash-sub {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        /* Progress Ring */
+        .progress-ring-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .progress-ring .bg {
+            stroke: #e0e0e0;
+        }
+
+        .progress-ring .progress {
+            stroke: #28a745;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s;
+        }
+
+        .progress-ring .progress.warning {
+            stroke: #ffc107;
+        }
+
+        .progress-ring .progress.danger {
+            stroke: #dc3545;
+        }
+
+        /* Store Status List */
+        .store-status-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        .store-status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .store-status-header h3 {
+            color: #1a1a2e;
+            font-size: 1rem;
+        }
+
+        .store-status-header .badge {
+            background: #e94560;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .store-status-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .store-status-filters select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            min-width: 150px;
+            background: white;
+        }
+
+        .store-status-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .store-status-item {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .store-status-item.visited {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .store-status-item.not-visited {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .store-status-item .status-icon {
+            font-size: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e94560;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 30px;
+            height: 30px;
+            background: #e94560;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #e94560;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Category Section */
+        .category-section {
+            margin-bottom: 25px;
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .category-header h3 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-header .badge {
+            background: #e94560;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* Checklist Item */
+        .checklist-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .checklist-item.yes {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .checklist-item.no {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .checklist-item-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .checklist-number {
+            background: #1a1a2e;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .checklist-text {
+            flex: 1;
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .checklist-buttons {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-yes, .btn-no, .btn-na {
+            padding: 8px 16px;
+            border: 2px solid;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-yes {
+            border-color: #28a745;
+            background: white;
+            color: #28a745;
+        }
+
+        .btn-yes:hover, .btn-yes.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-no {
+            border-color: #dc3545;
+            background: white;
+            color: #dc3545;
+        }
+
+        .btn-no:hover, .btn-no.active {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-na {
+            border-color: #6c757d;
+            background: white;
+            color: #6c757d;
+        }
+
+        .btn-na:hover, .btn-na.active {
+            background: #6c757d;
+            color: white;
+        }
+
+        .checklist-extra {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+            display: none;
+        }
+
+        .checklist-extra.show {
+            display: block;
+        }
+
+        .checklist-extra textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .checklist-extra .photo-upload {
+            margin-top: 10px;
+        }
+
+        .photo-upload label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #e94560;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .photo-upload label:hover {
+            background: #d63050;
+        }
+
+        .photo-upload input {
+            display: none;
+        }
+
+        .photo-preview {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .photo-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        /* Visit Proof Section */
+        .visit-proof-section {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+        }
+
+        .visit-proof-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .visit-proof-content {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .visit-proof-photo {
+            text-align: center;
+        }
+
+        .visit-proof-photo-preview {
+            width: 180px;
+            height: 180px;
+            border: 3px dashed rgba(255,255,255,0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .visit-proof-photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .visit-proof-photo-preview .placeholder {
+            color: rgba(255,255,255,0.5);
+            font-size: 3rem;
+        }
+
+        .visit-proof-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #e94560;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .visit-proof-upload-btn:hover {
+            background: #d63050;
+            transform: translateY(-2px);
+        }
+
+        .visit-proof-upload-btn input {
+            display: none;
+        }
+
+        .visit-proof-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .visit-proof-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .visit-proof-item .icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .visit-proof-item .info {
+            flex: 1;
+        }
+
+        .visit-proof-item .info .label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 3px;
+        }
+
+        .visit-proof-item .info .value {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .visit-proof-item .status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .visit-proof-item .status.success {
+            background: #28a745;
+        }
+
+        .visit-proof-item .status.pending {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .visit-proof-item .status.error {
+            background: #dc3545;
+        }
+
+        .get-location-btn {
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .get-location-btn:hover {
+            background: #218838;
+        }
+
+        .get-location-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Checklist Item with Photo */
+        .checklist-item-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .checklist-item-main {
+            flex: 1;
+        }
+
+        .checklist-item-photo {
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        .checklist-photo-btn {
+            width: 100%;
+            height: 70px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checklist-photo-btn:hover {
+            border-color: #e94560;
+            background: #fff5f7;
+        }
+
+        .checklist-photo-btn .camera-icon {
+            font-size: 1.5rem;
+            color: #999;
+        }
+
+        .checklist-photo-btn .photo-text {
+            font-size: 0.7rem;
+            color: #999;
+        }
+
+        .checklist-photo-btn input {
+            display: none;
+        }
+
+        .checklist-photo-btn img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .checklist-photo-btn.has-photo {
+            border-style: solid;
+            border-color: #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .visit-proof-content {
+                grid-template-columns: 1fr;
+            }
+            .visit-proof-photo {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .checklist-item-row {
+                flex-direction: column;
+            }
+            .checklist-item-photo {
+                width: 100%;
+            }
+            .checklist-photo-btn {
+                height: 50px;
+                flex-direction: row;
+            }
+        }
+
+        /* BM View - hide form sections */
+        .bm-view .form-section-hide {
+            display: none !important;
+        }
+
+        /* BM Welcome Section */
+        .bm-welcome {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .bm-welcome h2 {
+            margin-bottom: 10px;
+        }
+
+        .bm-welcome p {
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .bm-welcome .btn-view-archive {
+            padding: 15px 40px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bm-welcome .btn-view-archive:hover {
+            background: #d63050;
+            transform: translateY(-2px);
+        }
+
+        /* Archive Detail Modal */
+        .archive-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .archive-detail-modal.show {
+            display: flex;
+        }
+
+        .archive-detail-content {
+            background: white;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .archive-detail-header {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .archive-detail-body {
+            padding: 20px;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-section h4 {
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .detail-item .label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .detail-item .value {
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .checklist-summary {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .checklist-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .checklist-summary-item .status {
+            width: 60px;
+            text-align: center;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .checklist-summary-item .status.yes {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .checklist-summary-item .status.no {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .checklist-summary-item .status.na {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        /* BM Review Section */
+        .bm-review-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .bm-review-section h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .bm-review-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            min-height: 100px;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .bm-review-section .btn-submit-review {
+            padding: 12px 30px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bm-review-section .btn-submit-review:hover {
+            background: #218838;
+        }
+
+        .existing-review {
+            background: #e8f5e9;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .existing-review .review-header {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .existing-review .review-content {
+            color: #1a1a2e;
+        }
+
+        .visit-proof-thumbnail {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Score Section */
+        .score-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .score-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .score-display.good { color: #28a745; }
+        .score-display.average { color: #ffc107; }
+        .score-display.poor { color: #dc3545; }
+
+        .score-label {
+            font-size: 1.5rem;
+            padding: 10px 30px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .score-label.good { background: #28a745; }
+        .score-label.average { background: #ffc107; color: #333; }
+        .score-label.poor { background: #dc3545; }
+
+        .score-details {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .score-detail-item {
+            text-align: center;
+        }
+
+        .score-detail-item .number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .score-detail-item .label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Signature Section */
+        .signature-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .signature-box {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .signature-box-header {
+            background: #1a1a2e;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .signature-box-body {
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .signature-box canvas {
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            width: 100%;
+            height: 100px;
+            cursor: crosshair;
+            background: white;
+        }
+
+        .signature-box input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .signature-box .btn-clear {
+            margin-top: 8px;
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560 0%, #d63050 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn-secondary {
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #0f3460;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #28a745);
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* Archive */
+        .archive-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .archive-filters select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .archive-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .archive-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .archive-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .archive-item-info h4 {
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+
+        .archive-item-info p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .archive-item-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .archive-item-score.good { color: #28a745; }
+        .archive-item-score.average { color: #ffc107; }
+        .archive-item-score.poor { color: #dc3545; }
+
+        .archive-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-delete-archive {
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .btn-delete-archive:hover {
+            opacity: 1;
+        }
+
+        /* SPG Section */
+        .spg-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Comment Box */
+        .comment-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .comment-box label {
+            color: #856404;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .comment-box textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            min-height: 100px;
+            font-size: 0.95rem;
+        }
+
+        /* BM Dashboard in Archive */
+        .bm-dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bm-stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .bm-stat-card .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .bm-stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .bm-stat-card.good .stat-number { color: #28a745; }
+        .bm-stat-card.warning .stat-number { color: #ffc107; }
+        .bm-stat-card.danger .stat-number { color: #dc3545; }
+
+        /* Leaderboard */
+        .leaderboard {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard h3 {
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+        }
+
+        .leaderboard-item.gold {
+            background: linear-gradient(90deg, #fff9e6, #fff3cd);
+            border: 1px solid #ffc107;
+        }
+
+        .leaderboard-item.silver {
+            background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+            border: 1px solid #dee2e6;
+        }
+
+        .leaderboard-item.bronze {
+            background: linear-gradient(90deg, #fff5f0, #ffe5d9);
+            border: 1px solid #f5c6a5;
+        }
+
+        .leaderboard-rank {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+
+        .leaderboard-item.gold .leaderboard-rank {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .leaderboard-item.silver .leaderboard-rank {
+            background: #adb5bd;
+            color: white;
+        }
+
+        .leaderboard-item.bronze .leaderboard-rank {
+            background: #d4a373;
+            color: white;
+        }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .leaderboard-stats {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .leaderboard-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row, .spg-section {
+                grid-template-columns: 1fr;
+            }
+
+            .signature-section {
+                grid-template-columns: 1fr;
+            }
+
+            .checklist-item-header {
+                flex-direction: column;
+            }
+
+            .checklist-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .score-details {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .bm-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-box">
+            <div class="login-logo">
+                <div class="icon">Z</div>
+                <h1>Store Visit Checklist</h1>
+                <p>ZUMA Indonesia</p>
+            </div>
+            <div class="login-error" id="loginError"></div>
+            <form class="login-form" onsubmit="doLogin(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Masukkan username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Masukkan password" required>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="header-logo">Z</div>
+                    <div class="header-title">
+                        <h1>Store Visit Checklist</h1>
+                        <p>Area Supervisor Visit Form</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <div class="avatar" id="userAvatar">A</div>
+                        <div class="user-detail">
+                            <div class="user-name" id="userName">User</div>
+                            <div class="user-role" id="userRole">Role</div>
+                        </div>
+                    </div>
+                    <button class="btn-logout" onclick="doLogout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="dashboard-section" id="dashboardSection">
+                <div class="dashboard-grid">
+                    <div class="dash-card primary">
+                        <div class="dash-icon">&#128202;</div>
+                        <div class="dash-number" id="dashVisitCount">0</div>
+                        <div class="dash-label">Visit Bulan Ini</div>
+                        <div class="dash-sub" id="dashVisitTarget">Target: 0</div>
+                    </div>
+                    <div class="dash-card success">
+                        <div class="dash-icon">&#127919;</div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" viewBox="0 0 60 60">
+                                <circle class="bg" cx="30" cy="30" r="25"></circle>
+                                <circle class="progress" id="progressRing" cx="30" cy="30" r="25"
+                                    stroke-dasharray="157" stroke-dashoffset="157"></circle>
+                            </svg>
+                            <div>
+                                <div class="dash-number" id="dashProgress">0%</div>
+                                <div class="dash-label">Progress</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dash-card warning" id="dashCardScore">
+                        <div class="dash-icon">&#11088;</div>
+                        <div class="dash-number" id="dashAvgScore">-</div>
+                        <div class="dash-label">Avg Score</div>
+                        <div class="dash-sub" id="dashScoreStatus">-</div>
+                    </div>
+                    <div class="dash-card info">
+                        <div class="dash-icon">&#127978;</div>
+                        <div class="dash-number" id="dashPendingStore">0</div>
+                        <div class="dash-label">Belum Visit</div>
+                        <div class="dash-sub">bulan ini</div>
+                    </div>
+                </div>
+
+                <!-- Store Status -->
+                <div class="store-status-section">
+                    <div class="store-status-header">
+                        <h3>&#128205; Status Visit Store - <span id="currentMonth"></span></h3>
+                        <div class="badge" id="storeStatusBadge">0/0 Store</div>
+                    </div>
+                    <!-- Filter for BM -->
+                    <div class="store-status-filters" id="storeStatusFilters" style="display: none;">
+                        <select id="dashFilterArea" onchange="onDashAreaFilterChange()">
+                            <option value="">Semua Area</option>
+                        </select>
+                        <select id="dashFilterAS" onchange="updateDashboard()">
+                            <option value="">Semua AS</option>
+                        </select>
+                    </div>
+                    <div class="store-status-list" id="storeStatusList">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Welcome Section (for BM/Admin) -->
+            <div class="bm-welcome" id="bmWelcome" style="display: none;">
+                <h2 id="welcomeTitle">&#128188; Selamat Datang!</h2>
+                <p id="welcomeDesc">Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.</p>
+                <button class="btn-view-archive" onclick="openArchive()">&#128203; Lihat Arsip Visit</button>
+            </div>
+
+            <!-- Progress Checklist -->
+            <div class="progress-section form-section-hide">
+                <div class="progress-header">
+                    <span>Progress Checklist</span>
+                    <span id="progressText">0 / 42 item</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Store Info -->
+            <div class="card form-section-hide">
+                <div class="card-title">
+                    <div class="icon">&#127970;</div>
+                    Informasi Store
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Pilih Store *</label>
+                        <select id="storeName" required>
+                            <option value="">-- Pilih Store --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Visit</label>
+                        <input type="date" id="visitDate">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bukti Visit / Check-in -->
+            <div class="card visit-proof-section form-section-hide">
+                <div class="visit-proof-title">
+                    <span>&#128205;</span>
+                    <strong>BUKTI VISIT (Check-in)</strong>
+                </div>
+                <div class="visit-proof-content">
+                    <div class="visit-proof-photo">
+                        <div class="visit-proof-photo-preview" id="visitProofPreview">
+                            <span class="placeholder">&#128247;</span>
+                        </div>
+                        <label class="visit-proof-upload-btn">
+                            &#128247; Ambil Foto
+                            <input type="file" accept="image/*" capture="environment" onchange="uploadVisitProof(this.files)">
+                        </label>
+                    </div>
+                    <div class="visit-proof-info">
+                        <div class="visit-proof-item">
+                            <div class="icon">&#128197;</div>
+                            <div class="info">
+                                <div class="label">Tanggal & Waktu</div>
+                                <div class="value" id="visitProofTime">-</div>
+                            </div>
+                            <span class="status pending" id="visitProofTimeStatus">Menunggu</span>
+                        </div>
+                        <div class="visit-proof-item">
+                            <div class="icon">&#128205;</div>
+                            <div class="info">
+                                <div class="label">Lokasi GPS</div>
+                                <div class="value" id="visitProofLocation">-</div>
+                            </div>
+                            <button class="get-location-btn" id="getLocationBtn" onclick="getVisitLocation()">Ambil Lokasi</button>
+                        </div>
+                        <div class="visit-proof-item">
+                            <div class="icon">&#9989;</div>
+                            <div class="info">
+                                <div class="label">Status Check-in</div>
+                                <div class="value" id="visitProofStatus">Belum Check-in</div>
+                            </div>
+                            <span class="status pending" id="visitCheckinStatus">Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checklist Sections -->
+            <div class="card form-section-hide">
+                <div class="card-title">
+                    <div class="icon">&#9745;</div>
+                    Checklist Penilaian
+                </div>
+
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3>&#127978; STORE AMBIANCE</h3>
+                        <div class="badge" id="badge-ambiance">0 / 10</div>
+                    </div>
+                    <div id="checklist-ambiance"></div>
+                </div>
+
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3>&#128722; DISPLAY</h3>
+                        <div class="badge" id="badge-display">0 / 8</div>
+                    </div>
+                    <div id="checklist-display"></div>
+                </div>
+
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3>&#128203; STORE ADMINISTRASI</h3>
+                        <div class="badge" id="badge-admin">0 / 8</div>
+                    </div>
+                    <div id="checklist-admin"></div>
+                </div>
+
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3>&#129529; STORE CLEANING</h3>
+                        <div class="badge" id="badge-cleaning">0 / 7</div>
+                    </div>
+                    <div id="checklist-cleaning"></div>
+                </div>
+
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3>&#128105; SPG</h3>
+                        <div class="badge" id="badge-spg">0 / 7</div>
+                    </div>
+                    <div id="checklist-spg"></div>
+                </div>
+
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3>&#128230; STOCK</h3>
+                        <div class="badge" id="badge-stock">0 / 2</div>
+                    </div>
+                    <div id="checklist-stock"></div>
+                </div>
+            </div>
+
+            <!-- Score Display -->
+            <div class="card score-section form-section-hide" id="scoreSectionCard">
+                <h2 id="scoreTitle">HASIL PENILAIAN</h2>
+                <div class="score-display" id="scoreDisplay">0</div>
+                <div class="score-label" id="scoreLabel">Belum Dinilai</div>
+                <div class="score-details">
+                    <div class="score-detail-item">
+                        <div class="number" id="yesCount" style="color: #28a745;">0</div>
+                        <div class="label">YES</div>
+                    </div>
+                    <div class="score-detail-item">
+                        <div class="number" id="noCount" style="color: #dc3545;">0</div>
+                        <div class="label">NO</div>
+                    </div>
+                    <div class="score-detail-item">
+                        <div class="number" id="naCount" style="color: #6c757d;">0</div>
+                        <div class="label">N/A</div>
+                    </div>
+                </div>
+
+                <div class="comment-box">
+                    <label>&#128221; Comment Improvement:</label>
+                    <textarea id="commentImprovement" placeholder="Tuliskan catatan improvement untuk store..."></textarea>
+                </div>
+            </div>
+
+            <!-- Visitor Name (hidden input for PDF) -->
+            <input type="hidden" id="visitorName">
+            <input type="hidden" id="spgFirstShift">
+            <input type="hidden" id="spgSecondShift">
+
+            <!-- Buttons -->
+            <div class="button-group form-section-hide">
+                <button class="btn-secondary" onclick="openArchive()">
+                    &#128194; Lihat Arsip
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Detail Modal (for BM review) -->
+    <div class="archive-detail-modal" id="archiveDetailModal">
+        <div class="archive-detail-content">
+            <div class="archive-detail-header">
+                <h2>&#128203; Detail Visit</h2>
+                <button class="modal-close" onclick="closeArchiveDetail()">&times;</button>
+            </div>
+            <div class="archive-detail-body" id="archiveDetailBody">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Modal -->
+    <div class="modal" id="archiveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>&#128194; Arsip Visit</h2>
+                <button class="modal-close" onclick="closeArchive()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- BM Dashboard -->
+                <div class="bm-dashboard" id="bmDashboard" style="display: none;">
+                    <div class="bm-stat-card">
+                        <div class="stat-number" id="bmStatTotal">0</div>
+                        <div class="stat-label">Total Visit</div>
+                    </div>
+                    <div class="bm-stat-card good">
+                        <div class="stat-number" id="bmStatGood">0</div>
+                        <div class="stat-label">Good (80+)</div>
+                    </div>
+                    <div class="bm-stat-card warning">
+                        <div class="stat-number" id="bmStatAvg">0</div>
+                        <div class="stat-label">Average (60-79)</div>
+                    </div>
+                    <div class="bm-stat-card danger">
+                        <div class="stat-number" id="bmStatPoor">0</div>
+                        <div class="stat-label">Poor (&lt;60)</div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard for BM -->
+                <div class="leaderboard" id="leaderboard" style="display: none;">
+                    <h3>&#127942; Leaderboard AS - Bulan Ini</h3>
+                    <div id="leaderboardList"></div>
+                </div>
+
+                <!-- Filters -->
+                <div class="archive-filters">
+                    <select id="filterArea" onchange="onAreaFilterChange()">
+                        <option value="">Semua Area</option>
+                    </select>
+                    <select id="filterAS" onchange="onASFilterChange()" style="display: none;">
+                        <option value="">Semua AS</option>
+                    </select>
+                    <select id="filterStore" onchange="filterArchive()">
+                        <option value="">Semua Store</option>
+                    </select>
+                    <select id="filterScore" onchange="filterArchive()">
+                        <option value="">Semua Score</option>
+                        <option value="good">Good (80-100)</option>
+                        <option value="average">Average (60-79)</option>
+                        <option value="poor">Poor (&lt;60)</option>
+                    </select>
+                </div>
+
+                <div class="archive-list" id="archiveList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // DATA CONFIGURATION
+        // ========================================
+        const AREA_DATA = {
+            'bali1': { name: 'Bali 1', bm: 'Tomi', as: 'Wempy', stores: ['Bajera', 'Level 21', 'Lippo Bali', 'Jembrana', 'Ubud', 'Tabanan', 'Batubulan', 'Tanah Lot', 'Kapal'] },
+            'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Budiono', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Karangasem', 'Klungkung', 'Peguyangan', 'Pemogan', 'Monang Maning', 'Bangli', 'Lebah Peliatan'] },
+            'bali3': { name: 'Bali 3', bm: 'Tomi', as: 'Manda', stores: ['MBG', 'Kedonganan', 'Kesiman', 'Peliatan', 'Penatih', 'Panjer', 'Seririt', 'Singaraja', 'Uluwatu'] },
+            'jatim': { name: 'Jawa Timur', bm: 'Kusdiyan', as: 'Ninik', stores: ['Lippo SDA', 'PTC', 'Galaxy', 'Matos', 'Lippo Batu', 'Tunjungan Plaza', 'Royal', 'Icon Mall Gresik', 'City of Tomorrow', 'Sunrise Mall Mojokerto', 'Mall Olympic Garden'] },
+            'lombok': { name: 'Lombok', bm: 'Ariel', as: 'Laras', stores: ['Mataram', 'Epicentrum'] },
+            'jakarta': { name: 'Jakarta', bm: 'Christine', as: 'Irfa', stores: ['Pluit Village', 'MOI', 'LMP', 'Bintaro Xchange'] },
+            'sulawesi': { name: 'Sulawesi', bm: null, as: 'Dian', stores: ['Mega Mall'] },
+            'sumatera': { name: 'Sumatera', bm: 'Arvina', as: null, stores: ['Ska Mall', 'Nagoya Hills'] }
+        };
+
+        // Target: 1 visit per store per month
+        const VISIT_TARGET_PER_STORE = 1;
+
+        const DEFAULT_USERS = [{ username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all' }];
+
+        // Generate users
+        for (const [areaId, area] of Object.entries(AREA_DATA)) {
+            if (area.as) {
+                DEFAULT_USERS.push({ username: area.as.toLowerCase().replace(/\s+/g, ''), password: 'as123', role: 'as', name: area.as, area: areaId });
+            }
+        }
+        const bmAdded = new Set();
+        for (const [areaId, area] of Object.entries(AREA_DATA)) {
+            if (area.bm && !bmAdded.has(area.bm)) {
+                const bmAreas = Object.entries(AREA_DATA).filter(([id, a]) => a.bm === area.bm).map(([id]) => id);
+                DEFAULT_USERS.push({ username: area.bm.toLowerCase().replace(/\s+/g, ''), password: 'bm123', role: 'bm', name: area.bm, area: bmAreas });
+                bmAdded.add(area.bm);
+            }
+        }
+
+        const CHECKLIST_DATA = {
+            ambiance: [
+                { no: 1, text: "Layout toko diaplikasikan dengan benar seperti letak gondola, meja kasir, bench, meja display, signage, dll" },
+                { no: 2, text: "AC menyala dengan baik & lubang AC tidak berdebu" },
+                { no: 3, text: "Music menyala dengan baik playlist lagu sesuai VM guideline" },
+                { no: 4, text: "CCTV aktif, semua camera beserta equipment menyala dengan baik" },
+                { no: 5, text: "Tidak ada karton/box di area floor" },
+                { no: 6, text: "Rollingdoor berfungsi dengan baik" },
+                { no: 7, text: "Semua lampu menyala dengan baik" },
+                { no: 8, text: "Keadaan toko bersih dan display rapi sesuai planogram/max stock" },
+                { no: 9, text: "Memastikan WIFI aktif" },
+                { no: 10, text: "Memastikan aliran listrik berfungsi dengan baik" }
+            ],
+            display: [
+                { no: 11, text: "Produk best seller tersedia (T1-2-3) dan didisplay dengan baik" },
+                { no: 12, text: "Produk New arrival/campaign tersedia dan didisplay dengan baik" },
+                { no: 13, text: "Planogram toko terupdate based on sales mixed contribution per series" },
+                { no: 14, text: "POP harga terpasang dengan benar" },
+                { no: 15, text: "POP best seller terpasang dengan benar" },
+                { no: 16, text: "POP new arrival terpasang dengan benar" },
+                { no: 17, text: "Semua product terdapat hangtag (price tag)" },
+                { no: 18, text: "Tidak ada product reject/kotor yang di display" }
+            ],
+            admin: [
+                { no: 19, text: "Iseller dan Scanner berfungsi dengan baik" },
+                { no: 20, text: "DNPB dan fisik barang diterima di hari yang sama dan di filing dengan baik" },
+                { no: 21, text: "Mutasi antar store benar dan sesuai tujuan" },
+                { no: 22, text: "Petty cash toko sesuai prosedure, fisik uang ada di toko sesuai data" },
+                { no: 23, text: "Memastikan semua metode pembayaran (EDC, QR Code, Fintech) dapat digunakan dengan baik" },
+                { no: 24, text: "SO harian dikerjakan sesuai schedule, menunjukkan bukti data/catatan yang tersimpan" },
+                { no: 25, text: "Shrinkage SO sudah dilakukan penelusuran dan sudah ada adjustment oleh Ops team" },
+                { no: 26, text: "Setoran tunai disetorkan 1 hari berikutnya" }
+            ],
+            cleaning: [
+                { no: 27, text: "Lantai dalam keadaan bersih tidak berdebu" },
+                { no: 28, text: "Produk tidak berdebu" },
+                { no: 29, text: "Area cashier bersih dan rapi" },
+                { no: 30, text: "Stock gudang rapi dan bersih" },
+                { no: 31, text: "Fasilitas alat kebersihan tersedia (kanebo, lap, sapu, pel, dll)" },
+                { no: 32, text: "Barang pribadi disimpan di laci dengan rapi (HP, tas, helm, dll)" },
+                { no: 33, text: "Tempat sampah dan tissue tersedia" }
+            ],
+            spg: [
+                { no: 34, text: "Grooming sesuai SOP (makeup, rambut, hijab)" },
+                { no: 35, text: "Uniform bersih, rapi layak pakai & warna T-shirt sesuai dengan Jadwal pemakaian" },
+                { no: 36, text: "SPG Mengerti Product knowledge/keunggulan produk" },
+                { no: 37, text: "SPG melakukan Customer Service sesuai SOP Standar Customer service" },
+                { no: 38, text: "Menguasai up selling, link selling dan cross selling" },
+                { no: 39, text: "Menguasai handling objection & handling complain" },
+                { no: 40, text: "Menginformasikan retur dan garansi" }
+            ],
+            stock: [
+                { no: 41, text: "Stock yang ada di storage tersimpan rapi (store dengan storage)" },
+                { no: 42, text: "Check random minimal 5 SKU dengan data yang ada di Accurate (request ke Ops team)" }
+            ]
+        };
+
+        // ========================================
+        // GLOBAL VARIABLES
+        // ========================================
+        let currentUser = null;
+        let checklistAnswers = {};
+        let checklistRemarks = {};
+        let checklistPhotos = {};
+
+        // Visit Proof Data
+        let visitProofData = {
+            photo: null,
+            timestamp: null,
+            location: null
+        };
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initUsers();
+            checkLogin();
+        });
+
+        function initUsers() {
+            let users = JSON.parse(localStorage.getItem('visit_users') || 'null');
+            if (!users) {
+                localStorage.setItem('visit_users', JSON.stringify(DEFAULT_USERS));
+            }
+        }
+
+        function checkLogin() {
+            const savedUser = JSON.parse(localStorage.getItem('visit_current_user') || 'null');
+            if (savedUser) {
+                currentUser = savedUser;
+                showApp();
+            } else {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            initApp();
+        }
+
+        function doLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('visit_current_user', JSON.stringify(user));
+                errorDiv.style.display = 'none';
+                showApp();
+            } else {
+                errorDiv.textContent = 'Username atau password salah!';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function doLogout() {
+            if (confirm('Yakin ingin logout?')) {
+                currentUser = null;
+                localStorage.removeItem('visit_current_user');
+                location.reload();
+            }
+        }
+
+        function initApp() {
+            initUserDisplay();
+            initDashboard();
+
+            // BM dan Admin hanya bisa melihat, tidak bisa input checklist
+            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+                document.querySelector('.container').classList.add('bm-view');
+                document.getElementById('bmWelcome').style.display = 'block';
+
+                // Set welcome message based on role
+                if (currentUser.role === 'admin') {
+                    document.getElementById('welcomeTitle').innerHTML = '&#128736; Selamat Datang, Administrator!';
+                    document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.';
+                } else {
+                    document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
+                    document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
+                }
+            } else {
+                initStoreDropdown();
+                initChecklists();
+                hideScoreForAS();
+                document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        // Sembunyikan skor untuk AS
+        function hideScoreForAS() {
+            if (currentUser.role === 'as') {
+                // Sembunyikan kartu Avg Score di dashboard
+                document.getElementById('dashCardScore').style.display = 'none';
+
+                // Sembunyikan angka score dan label, tampilkan hanya YES/NO/NA count
+                document.getElementById('scoreDisplay').style.display = 'none';
+                document.getElementById('scoreLabel').style.display = 'none';
+                document.getElementById('scoreTitle').textContent = 'RINGKASAN CHECKLIST';
+
+                // Sembunyikan filter score di arsip
+                document.getElementById('filterScore').style.display = 'none';
+            }
+        }
+
+        function initUserDisplay() {
+            document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('userName').textContent = currentUser.name;
+            const roleNames = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor' };
+            document.getElementById('userRole').textContent = roleNames[currentUser.role] || currentUser.role;
+            document.getElementById('visitorName').value = currentUser.name;
+        }
+
+        function getUserStores() {
+            let stores = [];
+            if (currentUser.role === 'admin') {
+                for (const area of Object.values(AREA_DATA)) {
+                    area.stores.forEach(store => stores.push({ store, area: area.name }));
+                }
+            } else if (currentUser.role === 'bm') {
+                const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                bmAreas.forEach(areaId => {
+                    const area = AREA_DATA[areaId];
+                    if (area) area.stores.forEach(store => stores.push({ store, area: area.name }));
+                });
+            } else if (currentUser.role === 'as') {
+                const area = AREA_DATA[currentUser.area];
+                if (area) area.stores.forEach(store => stores.push({ store, area: area.name }));
+            }
+            return stores;
+        }
+
+        function initStoreDropdown() {
+            const select = document.getElementById('storeName');
+            select.innerHTML = '<option value="">-- Pilih Store --</option>';
+            const stores = getUserStores();
+            const grouped = {};
+            stores.forEach(s => {
+                if (!grouped[s.area]) grouped[s.area] = [];
+                grouped[s.area].push(s.store);
+            });
+
+            for (const [area, storeList] of Object.entries(grouped)) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = area;
+                storeList.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store;
+                    option.textContent = store;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
+        }
+
+        function initDashboard() {
+            const now = new Date();
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            document.getElementById('currentMonth').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+
+            // Show filters for BM
+            const filtersDiv = document.getElementById('storeStatusFilters');
+            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+                filtersDiv.style.display = 'flex';
+                populateDashFilters();
+            } else {
+                filtersDiv.style.display = 'none';
+            }
+
+            updateDashboard();
+        }
+
+        function populateDashFilters() {
+            const areaFilter = document.getElementById('dashFilterArea');
+            const asFilter = document.getElementById('dashFilterAS');
+
+            // Populate Area filter
+            let availableAreas = [];
+            if (currentUser.role === 'admin') {
+                availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
+            } else if (currentUser.role === 'bm') {
+                const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                bmAreas.forEach(areaId => {
+                    const area = AREA_DATA[areaId];
+                    if (area) availableAreas.push({ id: areaId, name: area.name });
+                });
+            }
+            // Sort: Bali 1, 2, 3 first
+            availableAreas.sort((a, b) => {
+                const order = ['bali1', 'bali2', 'bali3', 'jatim', 'lombok', 'jakarta', 'sulawesi', 'sumatera'];
+                return order.indexOf(a.id) - order.indexOf(b.id);
+            });
+            areaFilter.innerHTML = '<option value="">Semua Area</option>' + availableAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+            // Populate AS filter
+            let availableAS = [];
+            availableAreas.forEach(area => {
+                const areaData = AREA_DATA[area.id];
+                if (areaData && areaData.as) {
+                    availableAS.push({ name: areaData.as, areaId: area.id, areaName: area.name });
+                }
+            });
+            asFilter.innerHTML = '<option value="">Semua AS</option>' + availableAS.map(a => `<option value="${a.name}">${a.name} (${a.areaName})</option>`).join('');
+        }
+
+        function onDashAreaFilterChange() {
+            const areaId = document.getElementById('dashFilterArea').value;
+            const asFilter = document.getElementById('dashFilterAS');
+
+            if (areaId) {
+                // Show only AS for selected area
+                const areaData = AREA_DATA[areaId];
+                const asInArea = areaData && areaData.as ? [{ name: areaData.as, areaName: areaData.name }] : [];
+                asFilter.innerHTML = '<option value="">Semua AS</option>' + asInArea.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+            } else {
+                // Show all AS
+                populateDashFilters();
+            }
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const areaFilter = document.getElementById('dashFilterArea').value;
+            const asFilter = document.getElementById('dashFilterAS').value;
+
+            // Get stores based on filter
+            let stores = [];
+            if (areaFilter) {
+                // Filter by selected area
+                const areaData = AREA_DATA[areaFilter];
+                if (areaData) {
+                    stores = areaData.stores.map(s => ({ store: s, area: areaData.name }));
+                }
+            } else if (asFilter) {
+                // Filter by selected AS (find their area)
+                for (const [areaId, area] of Object.entries(AREA_DATA)) {
+                    if (area.as === asFilter) {
+                        stores = area.stores.map(s => ({ store: s, area: area.name }));
+                        break;
+                    }
+                }
+            } else {
+                // Show all stores for this user
+                stores = getUserStores();
+            }
+
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let monthlyVisits = archive.filter(v => {
+                const vDate = new Date(v.visitDate);
+                return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
+            });
+
+            // Filter by user role and selected filters
+            const storeNames = stores.map(s => s.store);
+            monthlyVisits = monthlyVisits.filter(v => storeNames.includes(v.storeName));
+
+            if (asFilter) {
+                monthlyVisits = monthlyVisits.filter(v => v.visitorName === asFilter);
+            }
+
+            // Calculate metrics
+            const visitCount = monthlyVisits.length;
+            const target = stores.length * VISIT_TARGET_PER_STORE;
+            const progress = target > 0 ? Math.round((visitCount / target) * 100) : 0;
+            const avgScore = monthlyVisits.length > 0 ? Math.round(monthlyVisits.reduce((sum, v) => sum + v.score, 0) / monthlyVisits.length) : 0;
+
+            // Visited stores this month
+            const visitedStores = [...new Set(monthlyVisits.map(v => v.storeName))];
+            const pendingStores = stores.filter(s => !visitedStores.includes(s.store));
+
+            // Update dashboard
+            document.getElementById('dashVisitCount').textContent = visitCount;
+            document.getElementById('dashVisitTarget').textContent = `Target: ${target}`;
+            document.getElementById('dashProgress').textContent = `${Math.min(progress, 100)}%`;
+            document.getElementById('dashAvgScore').textContent = avgScore > 0 ? avgScore : '-';
+            document.getElementById('dashScoreStatus').textContent = avgScore >= 80 ? 'Good' : avgScore >= 60 ? 'Average' : avgScore > 0 ? 'Poor' : '-';
+            document.getElementById('dashPendingStore').textContent = pendingStores.length;
+
+            // Progress ring
+            const ring = document.getElementById('progressRing');
+            const circumference = 2 * Math.PI * 25;
+            const offset = circumference - (Math.min(progress, 100) / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+            ring.classList.remove('warning', 'danger');
+            if (progress < 50) ring.classList.add('danger');
+            else if (progress < 80) ring.classList.add('warning');
+
+            // Store status list - show area info for BM
+            document.getElementById('storeStatusBadge').textContent = `${visitedStores.length}/${stores.length} Store`;
+            const statusList = document.getElementById('storeStatusList');
+            statusList.innerHTML = stores.map(s => {
+                const isVisited = visitedStores.includes(s.store);
+                const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin') && !areaFilter;
+                return `<div class="store-status-item ${isVisited ? 'visited' : 'not-visited'}">
+                    <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
+                    <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function initChecklists() {
+            for (const [category, items] of Object.entries(CHECKLIST_DATA)) {
+                const container = document.getElementById(`checklist-${category}`);
+                container.innerHTML = '';
+                items.forEach(item => container.appendChild(createChecklistItem(item, category)));
+            }
+        }
+
+        function createChecklistItem(item, category) {
+            const div = document.createElement('div');
+            div.className = 'checklist-item';
+            div.id = `item-${item.no}`;
+            div.innerHTML = `
+                <div class="checklist-item-row">
+                    <div class="checklist-item-main">
+                        <div class="checklist-item-header">
+                            <div class="checklist-number">${item.no}</div>
+                            <div class="checklist-text">${item.text}</div>
+                            <div class="checklist-buttons">
+                                <button class="btn-yes" onclick="setAnswer(${item.no}, 'yes', '${category}')">YES</button>
+                                <button class="btn-no" onclick="setAnswer(${item.no}, 'no', '${category}')">NO</button>
+                                <button class="btn-na" onclick="setAnswer(${item.no}, 'na', '${category}')">N/A</button>
+                            </div>
+                        </div>
+                        <div class="checklist-extra" id="extra-${item.no}">
+                            <textarea placeholder="Remarks / Catatan..." onchange="setRemarks(${item.no}, this.value)"></textarea>
+                        </div>
+                    </div>
+                    <div class="checklist-item-photo">
+                        <label class="checklist-photo-btn" id="photo-btn-${item.no}">
+                            <span class="camera-icon">&#128247;</span>
+                            <span class="photo-text">Foto</span>
+                            <input type="file" accept="image/*" capture="environment" onchange="uploadPhoto(${item.no}, this.files)">
+                        </label>
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        // Signature pads removed - no longer needed
+
+        // ========================================
+        // CHECKLIST FUNCTIONS
+        // ========================================
+        function setAnswer(no, answer, category) {
+            checklistAnswers[no] = answer;
+            const item = document.getElementById(`item-${no}`);
+            item.classList.remove('yes', 'no');
+            if (answer === 'yes') item.classList.add('yes');
+            if (answer === 'no') item.classList.add('no');
+
+            item.querySelectorAll('.btn-yes, .btn-no, .btn-na').forEach(btn => btn.classList.remove('active'));
+            item.querySelector(`.btn-${answer}`).classList.add('active');
+
+            const extra = document.getElementById(`extra-${no}`);
+            extra.classList.toggle('show', answer === 'no');
+
+            updateProgress();
+            updateScore();
+            updateCategoryBadge(category);
+        }
+
+        function setRemarks(no, value) { checklistRemarks[no] = value; }
+
+        function uploadPhoto(no, files) {
+            if (!checklistPhotos[no]) checklistPhotos[no] = [];
+            const btn = document.getElementById(`photo-btn-${no}`);
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    checklistPhotos[no].push(e.target.result);
+                    // Update button to show photo
+                    btn.innerHTML = `<img src="${e.target.result}">`;
+                    btn.classList.add('has-photo');
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ========================================
+        // VISIT PROOF FUNCTIONS
+        // ========================================
+        function uploadVisitProof(files) {
+            if (files.length === 0) return;
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = e => {
+                visitProofData.photo = e.target.result;
+                visitProofData.timestamp = new Date().toISOString();
+
+                // Update preview
+                document.getElementById('visitProofPreview').innerHTML = `<img src="${e.target.result}">`;
+
+                // Update timestamp display
+                const dt = new Date(visitProofData.timestamp);
+                const timeStr = dt.toLocaleDateString('id-ID', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                }) + ' ' + dt.toLocaleTimeString('id-ID');
+                document.getElementById('visitProofTime').textContent = timeStr;
+                document.getElementById('visitProofTimeStatus').textContent = 'OK';
+                document.getElementById('visitProofTimeStatus').className = 'status success';
+
+                updateVisitProofStatus();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function getVisitLocation() {
+            const btn = document.getElementById('getLocationBtn');
+            const locationEl = document.getElementById('visitProofLocation');
+
+            if (!navigator.geolocation) {
+                alert('Geolocation tidak didukung browser Anda');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Mengambil...';
+            locationEl.textContent = 'Mengambil lokasi...';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lng = position.coords.longitude.toFixed(6);
+                    visitProofData.location = { lat, lng, accuracy: position.coords.accuracy };
+
+                    locationEl.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9;">${lat}, ${lng}</a>`;
+                    btn.textContent = 'OK';
+                    btn.className = 'status success';
+                    btn.disabled = true;
+
+                    updateVisitProofStatus();
+                },
+                (error) => {
+                    let msg = 'Gagal mendapatkan lokasi';
+                    if (error.code === 1) msg = 'Akses lokasi ditolak';
+                    else if (error.code === 2) msg = 'Lokasi tidak tersedia';
+                    else if (error.code === 3) msg = 'Timeout';
+
+                    locationEl.textContent = msg;
+                    btn.textContent = 'Coba Lagi';
+                    btn.disabled = false;
+                    btn.className = 'get-location-btn';
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        function updateVisitProofStatus() {
+            const statusEl = document.getElementById('visitProofStatus');
+            const statusBadge = document.getElementById('visitCheckinStatus');
+
+            if (visitProofData.photo && visitProofData.location) {
+                statusEl.textContent = 'Check-in Berhasil';
+                statusBadge.textContent = 'OK';
+                statusBadge.className = 'status success';
+            } else if (visitProofData.photo || visitProofData.location) {
+                statusEl.textContent = 'Lengkapi data';
+                statusBadge.textContent = 'Incomplete';
+                statusBadge.className = 'status pending';
+            } else {
+                statusEl.textContent = 'Belum Check-in';
+                statusBadge.textContent = 'Pending';
+                statusBadge.className = 'status pending';
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(checklistAnswers).length;
+            document.getElementById('progressText').textContent = `${answered} / 42 item`;
+            document.getElementById('progressFill').style.width = `${(answered / 42) * 100}%`;
+        }
+
+        function updateScore() {
+            let yesCount = 0, noCount = 0, naCount = 0;
+            Object.values(checklistAnswers).forEach(a => {
+                if (a === 'yes') yesCount++;
+                else if (a === 'no') noCount++;
+                else if (a === 'na') naCount++;
+            });
+
+            const total = yesCount + noCount;
+            const score = total > 0 ? Math.round((yesCount / total) * 100) : 0;
+
+            document.getElementById('yesCount').textContent = yesCount;
+            document.getElementById('noCount').textContent = noCount;
+            document.getElementById('naCount').textContent = naCount;
+
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const scoreLabel = document.getElementById('scoreLabel');
+            scoreDisplay.textContent = score;
+            scoreDisplay.className = 'score-display';
+            scoreLabel.className = 'score-label';
+
+            if (score >= 80) { scoreDisplay.classList.add('good'); scoreLabel.classList.add('good'); scoreLabel.textContent = 'GOOD'; }
+            else if (score >= 60) { scoreDisplay.classList.add('average'); scoreLabel.classList.add('average'); scoreLabel.textContent = 'AVERAGE'; }
+            else if (total > 0) { scoreDisplay.classList.add('poor'); scoreLabel.classList.add('poor'); scoreLabel.textContent = 'POOR'; }
+            else { scoreLabel.textContent = 'Belum Dinilai'; }
+        }
+
+        function updateCategoryBadge(category) {
+            const items = CHECKLIST_DATA[category];
+            const count = items.filter(item => checklistAnswers[item.no]).length;
+            document.getElementById(`badge-${category}`).textContent = `${count} / ${items.length}`;
+        }
+
+        // ========================================
+        // ARCHIVE FUNCTIONS
+        // ========================================
+        function openArchive() {
+            loadArchive();
+            document.getElementById('archiveModal').classList.add('show');
+        }
+
+        function closeArchive() {
+            document.getElementById('archiveModal').classList.remove('show');
+        }
+
+        // Helper: get area name for a store
+        function getAreaForStore(storeName) {
+            for (const [areaId, area] of Object.entries(AREA_DATA)) {
+                if (area.stores.includes(storeName)) {
+                    return { id: areaId, name: area.name };
+                }
+            }
+            return null;
+        }
+
+        // Helper: get stores for an area
+        function getStoresForArea(areaId) {
+            return AREA_DATA[areaId] ? AREA_DATA[areaId].stores : [];
+        }
+
+        function loadArchive() {
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const stores = getUserStores();
+            const storeNames = stores.map(s => s.store);
+
+            let filtered = archive;
+            if (currentUser.role === 'as') {
+                filtered = archive.filter(a => a.visitorName === currentUser.name);
+            } else if (currentUser.role === 'bm') {
+                filtered = archive.filter(a => storeNames.includes(a.storeName));
+            }
+
+            // BM Dashboard & Leaderboard
+            const bmDashboard = document.getElementById('bmDashboard');
+            const leaderboard = document.getElementById('leaderboard');
+            const filterAS = document.getElementById('filterAS');
+            const filterArea = document.getElementById('filterArea');
+
+            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+                bmDashboard.style.display = 'grid';
+                leaderboard.style.display = 'block';
+                filterAS.style.display = 'block';
+                filterArea.style.display = 'block';
+
+                document.getElementById('bmStatTotal').textContent = filtered.length;
+                document.getElementById('bmStatGood').textContent = filtered.filter(a => a.score >= 80).length;
+                document.getElementById('bmStatAvg').textContent = filtered.filter(a => a.score >= 60 && a.score < 80).length;
+                document.getElementById('bmStatPoor').textContent = filtered.filter(a => a.score < 60).length;
+
+                // Leaderboard
+                const now = new Date();
+                const monthlyVisits = filtered.filter(v => {
+                    const d = new Date(v.visitDate);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+
+                const asStats = {};
+                monthlyVisits.forEach(v => {
+                    if (!asStats[v.visitorName]) asStats[v.visitorName] = { visits: 0, totalScore: 0 };
+                    asStats[v.visitorName].visits++;
+                    asStats[v.visitorName].totalScore += v.score;
+                });
+
+                const leaderboardData = Object.entries(asStats).map(([name, stats]) => ({
+                    name,
+                    visits: stats.visits,
+                    avgScore: Math.round(stats.totalScore / stats.visits)
+                })).sort((a, b) => b.avgScore - a.avgScore || b.visits - a.visits);
+
+                const leaderboardList = document.getElementById('leaderboardList');
+                leaderboardList.innerHTML = leaderboardData.slice(0, 5).map((item, i) => {
+                    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                    return `<div class="leaderboard-item ${rankClass}">
+                        <div class="leaderboard-rank">${i + 1}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">${item.name}</div>
+                            <div class="leaderboard-stats">${item.visits} visit bulan ini</div>
+                        </div>
+                        <div class="leaderboard-score">${item.avgScore}</div>
+                    </div>`;
+                }).join('') || '<p style="color:#666;text-align:center;">Belum ada data</p>';
+
+                // Area filter - show ALL areas managed by BM (not just visited)
+                let availableAreas = [];
+                if (currentUser.role === 'admin') {
+                    // Admin sees all areas
+                    availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
+                } else if (currentUser.role === 'bm') {
+                    // BM sees their managed areas
+                    const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                    bmAreas.forEach(areaId => {
+                        const area = AREA_DATA[areaId];
+                        if (area) availableAreas.push({ id: areaId, name: area.name });
+                    });
+                }
+                // Sort: Bali 1, 2, 3 first, then others
+                availableAreas.sort((a, b) => {
+                    const order = ['bali1', 'bali2', 'bali3', 'jatim', 'lombok', 'jakarta', 'sulawesi', 'sumatera'];
+                    return order.indexOf(a.id) - order.indexOf(b.id);
+                });
+                filterArea.innerHTML = '<option value="">Semua Area</option>' + availableAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+                // AS filter - show ALL AS in managed areas (not just visited)
+                let availableAS = [];
+                availableAreas.forEach(area => {
+                    const areaData = AREA_DATA[area.id];
+                    if (areaData && areaData.as) {
+                        availableAS.push(areaData.as);
+                    }
+                });
+                filterAS.innerHTML = '<option value="">Semua AS</option>' + availableAS.map(n => `<option value="${n}">${n}</option>`).join('');
+            } else {
+                bmDashboard.style.display = 'none';
+                leaderboard.style.display = 'none';
+                filterAS.style.display = 'none';
+                filterArea.style.display = 'none';
+            }
+
+            // Store filter - show ALL stores in managed areas (not just visited)
+            const allStores = stores.map(s => s.store);
+            document.getElementById('filterStore').innerHTML = '<option value="">Semua Store</option>' + allStores.map(s => `<option value="${s}">${s}</option>`).join('');
+
+            displayArchive(filtered);
+        }
+
+        // When area filter changes, update AS and store filter options
+        function onAreaFilterChange() {
+            const areaId = document.getElementById('filterArea').value;
+            const storeFilter = document.getElementById('filterStore');
+            const asFilter = document.getElementById('filterAS');
+            const userStores = getUserStores();
+
+            if (areaId) {
+                // Filter by selected area - show ALL AS and stores in this area
+                const areaData = AREA_DATA[areaId];
+                const areaStores = areaData ? areaData.stores : [];
+
+                // Update AS filter - show AS for this area
+                const asInArea = areaData && areaData.as ? [areaData.as] : [];
+                asFilter.innerHTML = '<option value="">Semua AS</option>' + asInArea.map(n => `<option value="${n}">${n}</option>`).join('');
+
+                // Update store filter - show ALL stores in this area
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + areaStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else {
+                // Show ALL AS and stores from user's managed areas
+                let allAS = [];
+                let allStores = [];
+
+                if (currentUser.role === 'admin') {
+                    Object.values(AREA_DATA).forEach(area => {
+                        if (area.as) allAS.push(area.as);
+                        allStores = allStores.concat(area.stores);
+                    });
+                } else if (currentUser.role === 'bm') {
+                    const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                    bmAreas.forEach(areaId => {
+                        const area = AREA_DATA[areaId];
+                        if (area) {
+                            if (area.as) allAS.push(area.as);
+                            allStores = allStores.concat(area.stores);
+                        }
+                    });
+                }
+
+                asFilter.innerHTML = '<option value="">Semua AS</option>' + allAS.map(n => `<option value="${n}">${n}</option>`).join('');
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + allStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+
+            filterArchive();
+        }
+
+        // When AS filter changes, update store filter options
+        function onASFilterChange() {
+            const areaId = document.getElementById('filterArea').value;
+            const asName = document.getElementById('filterAS').value;
+            const storeFilter = document.getElementById('filterStore');
+
+            // Find which area this AS belongs to
+            let areaStores = [];
+
+            if (asName) {
+                // Find area by AS name
+                for (const [id, area] of Object.entries(AREA_DATA)) {
+                    if (area.as === asName) {
+                        areaStores = area.stores;
+                        break;
+                    }
+                }
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + areaStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else if (areaId) {
+                // Show stores for selected area
+                const areaData = AREA_DATA[areaId];
+                areaStores = areaData ? areaData.stores : [];
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + areaStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else {
+                // Show all stores from user's managed areas
+                let allStores = [];
+                if (currentUser.role === 'admin') {
+                    Object.values(AREA_DATA).forEach(area => {
+                        allStores = allStores.concat(area.stores);
+                    });
+                } else if (currentUser.role === 'bm') {
+                    const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                    bmAreas.forEach(areaId => {
+                        const area = AREA_DATA[areaId];
+                        if (area) allStores = allStores.concat(area.stores);
+                    });
+                }
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + allStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+
+            filterArchive();
+        }
+
+        function filterArchive() {
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const stores = getUserStores().map(s => s.store);
+            const areaFilter = document.getElementById('filterArea').value;
+            const storeFilter = document.getElementById('filterStore').value;
+            const asFilter = document.getElementById('filterAS').value;
+            const scoreFilter = document.getElementById('filterScore').value;
+
+            let filtered = archive;
+            if (currentUser.role === 'as') filtered = filtered.filter(a => a.visitorName === currentUser.name);
+            else if (currentUser.role === 'bm') filtered = filtered.filter(a => stores.includes(a.storeName));
+
+            // Filter by area
+            if (areaFilter) {
+                const areaStores = getStoresForArea(areaFilter);
+                filtered = filtered.filter(a => areaStores.includes(a.storeName));
+            }
+
+            if (storeFilter) filtered = filtered.filter(a => a.storeName === storeFilter);
+            if (asFilter) filtered = filtered.filter(a => a.visitorName === asFilter);
+            if (scoreFilter === 'good') filtered = filtered.filter(a => a.score >= 80);
+            else if (scoreFilter === 'average') filtered = filtered.filter(a => a.score >= 60 && a.score < 80);
+            else if (scoreFilter === 'poor') filtered = filtered.filter(a => a.score < 60);
+
+            displayArchive(filtered);
+        }
+
+        function displayArchive(archive) {
+            const list = document.getElementById('archiveList');
+            if (archive.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#666;padding:40px;">Belum ada arsip visit</p>';
+                return;
+            }
+            const showScore = currentUser.role !== 'as';
+            const canClick = currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'as';
+            const canDelete = currentUser.role === 'admin' || currentUser.role === 'bm';
+            list.innerHTML = archive.map((item, idx) => {
+                const hasProof = item.visitProof && item.visitProof.photo;
+                const hasGPS = item.visitProof && item.visitProof.location;
+                const hasBmReview = item.bmReview && item.bmReview.comment;
+                const area = getAreaForStore(item.storeName);
+                const areaName = area ? area.name : '';
+                return `
+                <div class="archive-item" style="cursor:pointer;">
+                    <div class="archive-item-info" ${canClick ? `onclick="openArchiveDetail('${item.formNo}')"` : ''}>
+                        <h4>${item.storeName} ${hasProof ? '<span title="Foto bukti visit" style="color:#28a745;">&#128247;</span>' : ''} ${hasGPS ? '<span title="GPS tersedia" style="color:#28a745;">&#128205;</span>' : ''} ${hasBmReview ? '<span title="Review dari BM" style="color:#ffc107;">&#128172;</span>' : ''}</h4>
+                        <p><span style="background:#e9ecef;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-right:5px;">${areaName}</span>${item.formNo} | ${new Date(item.visitDate).toLocaleDateString('id-ID')} | AS: ${item.visitorName}</p>
+                    </div>
+                    <div class="archive-item-actions">
+                        ${showScore ? `<div class="archive-item-score ${item.score >= 80 ? 'good' : item.score >= 60 ? 'average' : 'poor'}">${item.score}</div>` : ''}
+                        ${canDelete ? `<button class="btn-delete-archive" onclick="event.stopPropagation(); deleteArchiveItem('${item.formNo}')" title="Hapus">&#128465;</button>` : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function deleteArchiveItem(formNo) {
+            if (!confirm('Apakah Anda yakin ingin menghapus arsip visit ini?')) return;
+
+            let archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const itemIndex = archive.findIndex(a => a.formNo === formNo);
+
+            if (itemIndex === -1) {
+                alert('Data tidak ditemukan');
+                return;
+            }
+
+            // Remove item from archive
+            archive.splice(itemIndex, 1);
+            localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Refresh archive list
+            filterArchive();
+
+            // Update dashboard if needed
+            if (typeof updateDashboard === 'function') {
+                updateDashboard();
+            }
+
+            alert('Arsip visit berhasil dihapus');
+        }
+
+        // ========================================
+        // ARCHIVE DETAIL & BM REVIEW
+        // ========================================
+        let currentDetailFormNo = null;
+
+        function openArchiveDetail(formNo) {
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const item = archive.find(a => a.formNo === formNo);
+            if (!item) return;
+
+            currentDetailFormNo = formNo;
+            const body = document.getElementById('archiveDetailBody');
+
+            // Build checklist summary
+            let checklistHtml = '';
+            const categories = ['ambiance', 'display', 'admin', 'cleaning', 'spg', 'stock'];
+            categories.forEach(cat => {
+                CHECKLIST_DATA[cat].forEach(ci => {
+                    const answer = item.answers[ci.no] || '-';
+                    const statusClass = answer === 'yes' ? 'yes' : answer === 'no' ? 'no' : 'na';
+                    const statusText = answer === 'yes' ? 'YES' : answer === 'no' ? 'NO' : answer === 'na' ? 'N/A' : '-';
+                    checklistHtml += `
+                        <div class="checklist-summary-item">
+                            <span class="status ${statusClass}">${statusText}</span>
+                            <span>${ci.no}. ${ci.text}</span>
+                        </div>`;
+                });
+            });
+
+            // Count YES/NO/NA
+            let yesCount = 0, noCount = 0, naCount = 0;
+            Object.values(item.answers || {}).forEach(a => {
+                if (a === 'yes') yesCount++;
+                else if (a === 'no') noCount++;
+                else if (a === 'na') naCount++;
+            });
+            const score = (yesCount + noCount) > 0 ? Math.round((yesCount / (yesCount + noCount)) * 100) : 0;
+
+            // Visit proof
+            const proofPhoto = item.visitProof?.photo || null;
+            const proofTime = item.visitProof?.timestamp ? new Date(item.visitProof.timestamp).toLocaleString('id-ID') : '-';
+            const proofLoc = item.visitProof?.location ? `${item.visitProof.location.lat}, ${item.visitProof.location.lng}` : '-';
+
+            // BM Review section - only show for BM/Admin, AS can only view
+            const canReview = currentUser.role === 'bm' || currentUser.role === 'admin';
+            const existingReview = item.bmReview;
+
+            body.innerHTML = `
+                <div class="detail-section">
+                    <h4>&#128203; Informasi Visit</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="label">Store</div>
+                            <div class="value">${item.storeName}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Tanggal Visit</div>
+                            <div class="value">${new Date(item.visitDate).toLocaleDateString('id-ID')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Area Supervisor</div>
+                            <div class="value">${item.visitorName}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Form No</div>
+                            <div class="value">${item.formNo}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>&#128205; Bukti Visit</h4>
+                    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+                        ${proofPhoto ? `<img src="${proofPhoto}" class="visit-proof-thumbnail" onclick="window.open('${proofPhoto}','_blank')">` : '<span style="color:#999;">Tidak ada foto</span>'}
+                        <div>
+                            <div class="detail-item" style="margin-bottom:10px;">
+                                <div class="label">Waktu Check-in</div>
+                                <div class="value">${proofTime}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="label">Lokasi GPS</div>
+                                <div class="value">${proofLoc !== '-' ? `<a href="https://maps.google.com/?q=${item.visitProof.location.lat},${item.visitProof.location.lng}" target="_blank">${proofLoc}</a>` : proofLoc}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${currentUser.role !== 'as' ? `
+                <div class="detail-section">
+                    <h4>&#127919; Hasil Penilaian</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="label">Score</div>
+                            <div class="value" style="font-size:1.5rem;color:${score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545'};">${score} (${score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR'})</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Summary</div>
+                            <div class="value" style="color:#28a745;">YES: ${yesCount}</div>
+                            <div class="value" style="color:#dc3545;">NO: ${noCount}</div>
+                            <div class="value" style="color:#6c757d;">N/A: ${naCount}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="detail-section">
+                    <h4>&#9745; Detail Checklist</h4>
+                    <div class="checklist-summary">
+                        ${checklistHtml}
+                    </div>
+                </div>
+
+                ${item.comment ? `
+                <div class="detail-section">
+                    <h4>&#128221; Catatan AS</h4>
+                    <p>${item.comment}</p>
+                </div>
+                ` : ''}
+
+                ${existingReview ? `
+                <div class="existing-review">
+                    <div class="review-header">Review dari ${existingReview.reviewerName} (${existingReview.reviewerRole.toUpperCase()}) - ${new Date(existingReview.reviewedAt).toLocaleString('id-ID')}</div>
+                    <div class="review-content">${existingReview.comment}</div>
+                </div>
+                ` : ''}
+
+                ${canReview ? `
+                <div class="bm-review-section">
+                    <h4>&#128172; ${existingReview ? 'Update Review' : 'Berikan Review / Feedback'}</h4>
+                    <textarea id="bmReviewText" placeholder="Tuliskan review, feedback, atau improvement untuk AS...">${existingReview ? existingReview.comment : ''}</textarea>
+                    <button class="btn-submit-review" onclick="submitBmReview()">&#10004; ${existingReview ? 'Update Review' : 'Submit Review'}</button>
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('archiveDetailModal').classList.add('show');
+        }
+
+        function closeArchiveDetail() {
+            document.getElementById('archiveDetailModal').classList.remove('show');
+            currentDetailFormNo = null;
+        }
+
+        function submitBmReview() {
+            const reviewText = document.getElementById('bmReviewText').value.trim();
+            if (!reviewText) {
+                alert('Tuliskan review terlebih dahulu!');
+                return;
+            }
+
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const idx = archive.findIndex(a => a.formNo === currentDetailFormNo);
+            if (idx === -1) return;
+
+            archive[idx].bmReview = {
+                comment: reviewText,
+                reviewerName: currentUser.name,
+                reviewerRole: currentUser.role,
+                reviewedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('visit_archive', JSON.stringify(archive));
+            alert('Review berhasil disimpan!');
+            closeArchiveDetail();
+            loadArchive();
+        }
+
+        // Close modal on background click
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'archiveDetailModal') closeArchiveDetail();
+        });
+
+        // ========================================
+        // PDF GENERATION
+        // ========================================
+        function generatePDF() {
+            const storeName = document.getElementById('storeName').value;
+            const visitDate = document.getElementById('visitDate').value;
+            const visitorName = document.getElementById('visitorName').value.trim();
+
+            if (!storeName) { alert('Pilih store terlebih dahulu!'); return; }
+            if (!visitProofData.photo) { alert('Upload foto bukti visit terlebih dahulu!'); return; }
+            if (!visitProofData.location && !confirm('Lokasi GPS belum diambil. Lanjutkan tanpa lokasi?')) return;
+            if (Object.keys(checklistAnswers).length < 42 && !confirm('Checklist belum lengkap. Lanjutkan?')) return;
+
+            let yesCount = 0, noCount = 0;
+            Object.values(checklistAnswers).forEach(a => { if (a === 'yes') yesCount++; else if (a === 'no') noCount++; });
+            const score = (yesCount + noCount) > 0 ? Math.round((yesCount / (yesCount + noCount)) * 100) : 0;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFillColor(26, 26, 46);
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
+
+            // Generate form number
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const formNo = `VIS-${dateStr}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
+            doc.setFontSize(10);
+            doc.text(formNo, 105, 30, { align: 'center' });
+
+            // Store Info
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(11);
+            let y = 45;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Store:', 15, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(storeName, 35, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Date:', 120, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y);
+            y += 7;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Visitor:', 15, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(visitorName, 35, y);
+
+            // Visit Proof Info
+            if (visitProofData.timestamp) {
+                y += 7;
+                doc.setFont('helvetica', 'bold');
+                doc.text('Check-in:', 15, y);
+                doc.setFont('helvetica', 'normal');
+                const checkInTime = new Date(visitProofData.timestamp);
+                doc.text(checkInTime.toLocaleString('id-ID'), 35, y);
+            }
+            if (visitProofData.location) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('GPS:', 120, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`${visitProofData.location.lat}, ${visitProofData.location.lng}`, 133, y);
+            }
+
+            // Visit Proof Photo - small thumbnail
+            if (visitProofData.photo) {
+                try {
+                    doc.addImage(visitProofData.photo, 'JPEG', 15, 62, 25, 25);
+                    doc.setDrawColor(26, 26, 46);
+                    doc.rect(15, 62, 25, 25);
+                    doc.setFontSize(6);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('Bukti Visit', 27.5, 90, { align: 'center' });
+                } catch(e) { console.log('Error adding visit proof image'); }
+            }
+
+            // Score Box - hanya tampil untuk BM & Admin
+            if (currentUser.role !== 'as') {
+                const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
+                doc.setFillColor(...scoreColor);
+                doc.roundedRect(150, 50, 45, 25, 3, 3, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${score}`, 172.5, 62, { align: 'center' });
+                doc.setFontSize(10);
+                doc.text(score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR', 172.5, 70, { align: 'center' });
+            }
+
+            // Checklist
+            doc.setTextColor(0, 0, 0);
+            y = 90;
+            const categories = [
+                { key: 'ambiance', name: 'STORE AMBIANCE' },
+                { key: 'display', name: 'DISPLAY' },
+                { key: 'admin', name: 'STORE ADMINISTRASI' },
+                { key: 'cleaning', name: 'STORE CLEANING' },
+                { key: 'spg', name: 'SPG' },
+                { key: 'stock', name: 'STOCK' }
+            ];
+
+            categories.forEach(cat => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setFillColor(15, 52, 96);
+                doc.rect(15, y, 180, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text(cat.name, 20, y + 5.5);
+                y += 12;
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                CHECKLIST_DATA[cat.key].forEach(item => {
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    const answer = checklistAnswers[item.no] || '-';
+                    const answerText = answer === 'yes' ? 'YES' : answer === 'no' ? 'NO' : answer === 'na' ? 'N/A' : '-';
+
+                    if (answer === 'yes') doc.setTextColor(40, 167, 69);
+                    else if (answer === 'no') doc.setTextColor(220, 53, 69);
+                    else doc.setTextColor(108, 117, 125);
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`${item.no}.`, 15, y);
+                    doc.text(answerText, 185, y, { align: 'right' });
+
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont('helvetica', 'normal');
+                    const lines = doc.splitTextToSize(item.text, 150);
+                    doc.text(lines, 25, y);
+                    y += lines.length * 5 + 3;
+
+                    if (checklistRemarks[item.no]) {
+                        doc.setTextColor(100, 100, 100);
+                        doc.setFontSize(8);
+                        doc.text(`Remarks: ${checklistRemarks[item.no]}`, 25, y);
+                        y += 5;
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFontSize(9);
+                    }
+                });
+                y += 5;
+            });
+
+            // Comment
+            const comment = document.getElementById('commentImprovement').value.trim();
+            if (comment) {
+                if (y > 240) { doc.addPage(); y = 20; }
+                doc.setFillColor(255, 243, 205);
+                doc.rect(15, y, 180, 25, 'F');
+                doc.setTextColor(133, 100, 4);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Comment Improvement:', 20, y + 6);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text(doc.splitTextToSize(comment, 170), 20, y + 12);
+                y += 30;
+            }
+
+            // Save archive
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            archive.unshift({
+                formNo,
+                storeName,
+                visitDate,
+                score,
+                answers: { ...checklistAnswers },
+                remarks: { ...checklistRemarks },
+                photos: { ...checklistPhotos },
+                visitorName,
+                comment,
+                visitProof: {
+                    photo: visitProofData.photo,
+                    timestamp: visitProofData.timestamp,
+                    location: visitProofData.location
+                },
+                createdAt: new Date().toISOString()
+            });
+            localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            doc.save(`Visit_${storeName.replace(/\s+/g, '_')}_${visitDate}.pdf`);
+
+            if (confirm('PDF berhasil! Buat visit baru?')) resetForm();
+        }
+
+        function resetForm() {
+            checklistAnswers = {};
+            checklistRemarks = {};
+            checklistPhotos = {};
+            visitProofData = { photo: null, timestamp: null, location: null };
+            document.getElementById('storeName').value = '';
+            document.getElementById('commentImprovement').value = '';
+
+            // Reset visit proof display
+            document.getElementById('visitProofPreview').innerHTML = '<span class="placeholder">&#128247;</span>';
+            document.getElementById('visitProofTime').textContent = '-';
+            document.getElementById('visitProofTimeStatus').textContent = 'Menunggu';
+            document.getElementById('visitProofTimeStatus').className = 'status pending';
+            document.getElementById('visitProofLocation').textContent = '-';
+            const locBtn = document.getElementById('getLocationBtn');
+            locBtn.textContent = 'Ambil Lokasi';
+            locBtn.className = 'get-location-btn';
+            locBtn.disabled = false;
+            document.getElementById('visitProofStatus').textContent = 'Belum Check-in';
+            document.getElementById('visitCheckinStatus').textContent = 'Pending';
+            document.getElementById('visitCheckinStatus').className = 'status pending';
+
+            initChecklists();
+            updateProgress();
+            updateScore();
+            Object.keys(CHECKLIST_DATA).forEach(cat => updateCategoryBadge(cat));
+            initDashboard();
+        }
+
+        document.getElementById('archiveModal').addEventListener('click', function(e) { if (e.target === this) closeArchive(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeArchive(); });
+    </script>
+</body>
+</html>

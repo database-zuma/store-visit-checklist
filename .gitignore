@@ -1,0 +1,15 @@
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+
+# Excel files
+*.xlsx
+*.xls
+
+# CSV files (reference data)
+*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
