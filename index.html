@@ -3112,10 +3112,31 @@
                 return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
             });
 
+            // Get unique BMs and ASs for filters
+            let allBMs = [];
+            let allASs = [];
+            Object.values(AREA_DATA).forEach(area => {
+                if (area.bm && !allBMs.includes(area.bm)) allBMs.push(area.bm);
+                if (area.as && !allASs.includes(area.as)) allASs.push(area.as);
+            });
+
             let hoHtml = `
                 <div style="margin-top: 20px;">
-                    <h3 style="color: #e94560; margin-bottom: 15px; font-size: 1.2rem;">&#127970; Regional Dashboard - ${now.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.2rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">&#127970; Regional Dashboard - ${now.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}</h3>
+
+                    <!-- Filter Section -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <select id="hoFilterBM" onchange="filterHODashboard()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; min-width: 150px;">
+                            <option value="">Semua BM</option>
+                            ${allBMs.map(bm => '<option value="' + bm + '">' + bm + '</option>').join('')}
+                        </select>
+                        <select id="hoFilterAS" onchange="filterHODashboard()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; min-width: 150px;">
+                            <option value="">Semua AS</option>
+                            ${allASs.map(as => '<option value="' + as + '">' + as + '</option>').join('')}
+                        </select>
+                    </div>
+
+                    <div id="hoRegionalGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
             `;
 
             for (const [regionName, areaIds] of Object.entries(regions)) {
@@ -3158,8 +3179,12 @@
                 const progress = totalStores > 0 ? Math.round((totalVisits / totalStores) * 100) : 0;
                 const progressColor = progress >= 80 ? '#28a745' : progress >= 50 ? '#ffc107' : '#dc3545';
 
+                // Collect BMs and ASs for this region
+                const regionBMs = areaDetails.map(a => a.bm).filter(b => b !== 'tidak ada');
+                const regionASs = areaDetails.map(a => a.as).filter(a => a !== 'tidak ada');
+
                 hoHtml += `
-                    <div style="background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <div class="ho-region-card" data-bms="${regionBMs.join(',')}" data-ass="${regionASs.join(',')}" style="background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h4 style="margin: 0; color: #1a1a2e;">${regionName}</h4>
                             <span style="background: ${avgScore >= 80 ? '#28a745' : avgScore >= 60 ? '#ffc107' : '#dc3545'}; color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px;">Avg: ${avgScore}%</span>
@@ -3213,6 +3238,29 @@
             `;
 
             bmWelcome.insertAdjacentHTML('beforeend', summaryHtml + hoHtml);
+        }
+
+        // Filter HO Dashboard by BM or AS
+        function filterHODashboard() {
+            const bmFilter = document.getElementById('hoFilterBM').value;
+            const asFilter = document.getElementById('hoFilterAS').value;
+            const cards = document.querySelectorAll('.ho-region-card');
+
+            cards.forEach(card => {
+                const cardBMs = card.dataset.bms ? card.dataset.bms.split(',') : [];
+                const cardASs = card.dataset.ass ? card.dataset.ass.split(',') : [];
+
+                let showCard = true;
+
+                if (bmFilter && !cardBMs.includes(bmFilter)) {
+                    showCard = false;
+                }
+                if (asFilter && !cardASs.includes(asFilter)) {
+                    showCard = false;
+                }
+
+                card.style.display = showCard ? 'block' : 'none';
+            });
         }
 
         // Helper: get area name for a store
