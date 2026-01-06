@@ -2178,6 +2178,42 @@
         </div>
     </div>
 
+    <!-- Admin Panel Modal -->
+    <div class="modal" id="adminPanelModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>&#128736; Admin Panel - Kelola User</h2>
+                <button class="modal-close" onclick="closeAdminPanel()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Add User Form -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">&#10133; Tambah User Baru</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <input type="text" id="newUsername" placeholder="Username" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="password" id="newPassword" placeholder="Password" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="text" id="newName" placeholder="Nama Lengkap" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <select id="newRole" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">-- Pilih Role --</option>
+                            <option value="ho">Head Office</option>
+                            <option value="bm">Branch Manager</option>
+                            <option value="as">Area Supervisor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <select id="newArea" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="all">Semua Area</option>
+                        </select>
+                        <button onclick="addNewUser()" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Tambah</button>
+                    </div>
+                </div>
+
+                <!-- User List -->
+                <h3>&#128101; Daftar User</h3>
+                <div id="userListAdmin" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Archive Modal -->
     <div class="modal" id="archiveModal">
         <div class="modal-content">
@@ -2256,7 +2292,10 @@
         // Target: 1 visit per store per month
         const VISIT_TARGET_PER_STORE = 1;
 
-        const DEFAULT_USERS = [{ username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all' }];
+        const DEFAULT_USERS = [
+            { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all' },
+            { username: 'ho', password: 'ho123', role: 'ho', name: 'Head Office', area: 'all' }
+        ];
 
         // Generate users
         for (const [areaId, area] of Object.entries(AREA_DATA)) {
@@ -2413,15 +2452,19 @@
             initUserDisplay();
             initDashboard();
 
-            // BM dan Admin hanya bisa melihat, tidak bisa input checklist
-            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+            // BM, Admin, dan HO hanya bisa melihat, tidak bisa input checklist
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
                 document.querySelector('.container').classList.add('bm-view');
                 document.getElementById('bmWelcome').style.display = 'block';
 
                 // Set welcome message based on role
                 if (currentUser.role === 'admin') {
                     document.getElementById('welcomeTitle').innerHTML = '&#128736; Selamat Datang, Administrator!';
-                    document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.';
+                    document.getElementById('welcomeDesc').innerHTML = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.<br><button onclick="openAdminPanel()" style="margin-top:10px;padding:8px 15px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;">&#128736; Kelola User</button>';
+                } else if (currentUser.role === 'ho') {
+                    document.getElementById('welcomeTitle').innerHTML = '&#127970; Selamat Datang, Head Office!';
+                    document.getElementById('welcomeDesc').textContent = 'Anda dapat memonitor semua visit dari seluruh area Indonesia.';
+                    initHODashboard();
                 } else {
                     document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
                     document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
@@ -2453,14 +2496,14 @@
         function initUserDisplay() {
             document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
             document.getElementById('userName').textContent = currentUser.name;
-            const roleNames = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor' };
+            const roleNames = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor', 'ho': 'Head Office' };
             document.getElementById('userRole').textContent = roleNames[currentUser.role] || currentUser.role;
             document.getElementById('visitorName').value = currentUser.name;
         }
 
         function getUserStores() {
             let stores = [];
-            if (currentUser.role === 'admin') {
+            if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                 for (const area of Object.values(AREA_DATA)) {
                     area.stores.forEach(store => stores.push({ store, area: area.name }));
                 }
@@ -2505,9 +2548,9 @@
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             document.getElementById('currentMonth').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
 
-            // Show filters for BM
+            // Show filters for BM, Admin, HO
             const filtersDiv = document.getElementById('storeStatusFilters');
-            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
                 filtersDiv.style.display = 'flex';
                 populateDashFilters();
             } else {
@@ -2523,7 +2566,7 @@
 
             // Populate Area filter
             let availableAreas = [];
-            if (currentUser.role === 'admin') {
+            if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                 availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
             } else if (currentUser.role === 'bm') {
                 const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
@@ -2641,7 +2684,7 @@
             const statusList = document.getElementById('storeStatusList');
             statusList.innerHTML = stores.map(s => {
                 const isVisited = visitedStores.includes(s.store);
-                const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin') && !areaFilter;
+                const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') && !areaFilter;
                 return `<div class="store-status-item ${isVisited ? 'visited' : 'not-visited'}">
                     <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
                     <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
@@ -2884,6 +2927,254 @@
             if (e.target.id === 'rulesModal') closeRules();
         });
 
+        // ========================================
+        // ADMIN PANEL FUNCTIONS
+        // ========================================
+        function openAdminPanel() {
+            document.getElementById('adminPanelModal').classList.add('show');
+            loadUserListAdmin();
+            populateAreaDropdown();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanelModal').classList.remove('show');
+        }
+
+        function populateAreaDropdown() {
+            const select = document.getElementById('newArea');
+            select.innerHTML = '<option value="all">Semua Area</option>';
+            for (const [areaId, area] of Object.entries(AREA_DATA)) {
+                const option = document.createElement('option');
+                option.value = areaId;
+                option.textContent = area.name;
+                select.appendChild(option);
+            }
+        }
+
+        function loadUserListAdmin() {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const container = document.getElementById('userListAdmin');
+
+            if (users.length === 0) {
+                container.innerHTML = '<p>Tidak ada user.</p>';
+                return;
+            }
+
+            let html = '<table style="width:100%;border-collapse:collapse;">';
+            html += '<thead><tr style="background:#f8f9fa;"><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Username</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Nama</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Role</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Area</th><th style="padding:10px;text-align:center;border-bottom:2px solid #dee2e6;">Aksi</th></tr></thead><tbody>';
+
+            const roleLabels = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor', 'ho': 'Head Office' };
+
+            users.forEach(user => {
+                const areaLabel = user.area === 'all' ? 'Semua' : (Array.isArray(user.area) ? user.area.map(a => AREA_DATA[a]?.name || a).join(', ') : (AREA_DATA[user.area]?.name || user.area));
+                const isDefault = DEFAULT_USERS.some(d => d.username === user.username);
+
+                html += `<tr style="border-bottom:1px solid #dee2e6;">
+                    <td style="padding:10px;">${user.username}</td>
+                    <td style="padding:10px;">${user.name}</td>
+                    <td style="padding:10px;"><span style="background:${user.role === 'admin' ? '#dc3545' : user.role === 'ho' ? '#6f42c1' : user.role === 'bm' ? '#007bff' : '#28a745'};color:white;padding:2px 8px;border-radius:10px;font-size:12px;">${roleLabels[user.role] || user.role}</span></td>
+                    <td style="padding:10px;font-size:12px;">${areaLabel}</td>
+                    <td style="padding:10px;text-align:center;">
+                        <button onclick="changeUserPassword('${user.username}')" style="padding:5px 10px;background:#ffc107;color:#000;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Password">&#128273;</button>
+                        ${!isDefault ? `<button onclick="deleteUser('${user.username}')" style="padding:5px 10px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;" title="Hapus">&#128465;</button>` : ''}
+                    </td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function addNewUser() {
+            const username = document.getElementById('newUsername').value.trim().toLowerCase();
+            const password = document.getElementById('newPassword').value;
+            const name = document.getElementById('newName').value.trim();
+            const role = document.getElementById('newRole').value;
+            const area = document.getElementById('newArea').value;
+
+            if (!username || !password || !name || !role) {
+                alert('Semua field harus diisi!');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+
+            if (users.some(u => u.username === username)) {
+                alert('Username sudah ada!');
+                return;
+            }
+
+            users.push({ username, password, name, role, area: role === 'ho' || role === 'admin' ? 'all' : area });
+            localStorage.setItem('visit_users', JSON.stringify(users));
+
+            // Clear form
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newRole').value = '';
+            document.getElementById('newArea').value = 'all';
+
+            alert('User berhasil ditambahkan!');
+            loadUserListAdmin();
+        }
+
+        function changeUserPassword(username) {
+            const newPassword = prompt('Masukkan password baru untuk ' + username + ':');
+            if (!newPassword) return;
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const userIndex = users.findIndex(u => u.username === username);
+
+            if (userIndex === -1) {
+                alert('User tidak ditemukan!');
+                return;
+            }
+
+            users[userIndex].password = newPassword;
+            localStorage.setItem('visit_users', JSON.stringify(users));
+            alert('Password berhasil diubah!');
+        }
+
+        function deleteUser(username) {
+            if (!confirm('Hapus user ' + username + '?')) return;
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const filtered = users.filter(u => u.username !== username);
+            localStorage.setItem('visit_users', JSON.stringify(filtered));
+
+            alert('User berhasil dihapus!');
+            loadUserListAdmin();
+        }
+
+        // Close admin panel when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'adminPanelModal') closeAdminPanel();
+        });
+
+        // ========================================
+        // HEAD OFFICE DASHBOARD
+        // ========================================
+        function initHODashboard() {
+            const bmWelcome = document.getElementById('bmWelcome');
+
+            // Group areas by region
+            const regions = {
+                'Bali': ['bali1', 'bali2', 'bali3'],
+                'Jawa Timur': ['jatim'],
+                'Jakarta': ['jakarta'],
+                'Lombok': ['lombok'],
+                'Sulawesi': ['sulawesi'],
+                'Sumatera': ['sumatera']
+            };
+
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // Filter this month's visits
+            const thisMonthVisits = archive.filter(v => {
+                const vDate = new Date(v.createdAt || v.visitDate);
+                return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
+            });
+
+            let hoHtml = `
+                <div style="margin-top: 20px;">
+                    <h3 style="color: #1a1a2e; margin-bottom: 15px;">&#127970; Regional Dashboard - ${now.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+            `;
+
+            for (const [regionName, areaIds] of Object.entries(regions)) {
+                let totalStores = 0;
+                let totalVisits = 0;
+                let totalScore = 0;
+                let visitCount = 0;
+                let areaDetails = [];
+
+                areaIds.forEach(areaId => {
+                    const area = AREA_DATA[areaId];
+                    if (area) {
+                        const storeCount = area.stores.length;
+                        totalStores += storeCount;
+
+                        const areaVisits = thisMonthVisits.filter(v => {
+                            const vArea = getAreaForStore(v.storeName);
+                            return vArea && vArea.id === areaId;
+                        });
+
+                        const areaVisitCount = areaVisits.length;
+                        totalVisits += areaVisitCount;
+
+                        areaVisits.forEach(v => {
+                            totalScore += v.score || 0;
+                            visitCount++;
+                        });
+
+                        areaDetails.push({
+                            name: area.name,
+                            as: area.as || '-',
+                            stores: storeCount,
+                            visits: areaVisitCount
+                        });
+                    }
+                });
+
+                const avgScore = visitCount > 0 ? Math.round(totalScore / visitCount) : 0;
+                const progress = totalStores > 0 ? Math.round((totalVisits / totalStores) * 100) : 0;
+                const progressColor = progress >= 80 ? '#28a745' : progress >= 50 ? '#ffc107' : '#dc3545';
+
+                hoHtml += `
+                    <div style="background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="margin: 0; color: #1a1a2e;">${regionName}</h4>
+                            <span style="background: ${avgScore >= 80 ? '#28a745' : avgScore >= 60 ? '#ffc107' : '#dc3545'}; color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px;">Avg: ${avgScore}%</span>
+                        </div>
+                        <div style="background: #e9ecef; border-radius: 5px; height: 8px; margin-bottom: 10px;">
+                            <div style="background: ${progressColor}; width: ${Math.min(progress, 100)}%; height: 100%; border-radius: 5px;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 10px;">
+                            <span>&#127978; ${totalStores} Store</span>
+                            <span>&#128203; ${totalVisits} Visit</span>
+                            <span>${progress}% Target</span>
+                        </div>
+                        <div style="border-top: 1px solid #eee; padding-top: 10px; font-size: 12px;">
+                            ${areaDetails.map(a => `<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${a.name}</span><span style="color:#666;">AS: ${a.as} | ${a.visits}/${a.stores}</span></div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            hoHtml += '</div></div>';
+
+            // Add summary stats
+            const totalAllStores = Object.values(AREA_DATA).reduce((sum, a) => sum + a.stores.length, 0);
+            const totalAllVisits = thisMonthVisits.length;
+            const overallAvg = thisMonthVisits.length > 0 ? Math.round(thisMonthVisits.reduce((sum, v) => sum + (v.score || 0), 0) / thisMonthVisits.length) : 0;
+
+            const summaryHtml = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 15px; margin-bottom: 10px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">${totalAllStores}</div>
+                        <div style="font-size: 12px;">Total Store</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">${totalAllVisits}</div>
+                        <div style="font-size: 12px;">Visit Bulan Ini</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">${overallAvg}%</div>
+                        <div style="font-size: 12px;">Avg Score</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;">${Math.round((totalAllVisits / totalAllStores) * 100)}%</div>
+                        <div style="font-size: 12px;">Coverage</div>
+                    </div>
+                </div>
+            `;
+
+            bmWelcome.insertAdjacentHTML('beforeend', summaryHtml + hoHtml);
+        }
+
         // Helper: get area name for a store
         function getAreaForStore(storeName) {
             for (const [areaId, area] of Object.entries(AREA_DATA)) {
@@ -2917,7 +3208,7 @@
             const filterAS = document.getElementById('filterAS');
             const filterArea = document.getElementById('filterArea');
 
-            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
                 bmDashboard.style.display = 'grid';
                 leaderboard.style.display = 'block';
                 filterAS.style.display = 'block';
@@ -2963,8 +3254,8 @@
 
                 // Area filter - show ALL areas managed by BM (not just visited)
                 let availableAreas = [];
-                if (currentUser.role === 'admin') {
-                    // Admin sees all areas
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
+                    // Admin/HO sees all areas
                     availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
                 } else if (currentUser.role === 'bm') {
                     // BM sees their managed areas
@@ -3027,7 +3318,7 @@
                 let allAS = [];
                 let allStores = [];
 
-                if (currentUser.role === 'admin') {
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                     Object.values(AREA_DATA).forEach(area => {
                         if (area.as) allAS.push(area.as);
                         allStores = allStores.concat(area.stores);
@@ -3076,7 +3367,7 @@
             } else {
                 // Show all stores from user's managed areas
                 let allStores = [];
-                if (currentUser.role === 'admin') {
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                     Object.values(AREA_DATA).forEach(area => {
                         allStores = allStores.concat(area.stores);
                     });
@@ -3127,7 +3418,7 @@
                 return;
             }
             const showScore = currentUser.role !== 'as';
-            const canClick = currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'as';
+            const canClick = currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'as' || currentUser.role === 'ho';
             const canDelete = currentUser.role === 'admin' || currentUser.role === 'bm';
             list.innerHTML = archive.map((item, idx) => {
                 const hasProof = item.visitProof && item.visitProof.photo;
@@ -3489,138 +3780,106 @@
             initDashboard();
         }
 
-        // Generate PDF and return as base64
+        // Generate PDF and return as base64 - SIMPLE VERSION
         function generatePdfBase64(formNo, storeName, visitDate, visitorName, areaName, score, comment) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
 
-            // Header
-            doc.setFillColor(26, 26, 46);
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text(formNo, 105, 30, { align: 'center' });
-
-            // Store Info
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-            let y = 45;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Store:', 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(storeName, 35, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Date:', 120, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y);
-            y += 7;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Visitor:', 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(visitorName, 35, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Area:', 120, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(areaName, 135, y);
-
-            // Visit Proof Info
-            if (visitProofData.timestamp) {
-                y += 7;
+                // Header
+                doc.setFillColor(26, 26, 46);
+                doc.rect(0, 0, 210, 35, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(18);
                 doc.setFont('helvetica', 'bold');
-                doc.text('Check-in:', 15, y);
+                doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
+                doc.setFontSize(12);
                 doc.setFont('helvetica', 'normal');
-                const checkInTime = new Date(visitProofData.timestamp);
-                doc.text(checkInTime.toLocaleString('id-ID'), 35, y);
-            }
-            if (visitProofData.location && typeof visitProofData.location.lat === 'number' && typeof visitProofData.location.lng === 'number') {
-                y += 7;
-                doc.setFont('helvetica', 'bold');
-                doc.text('GPS:', 15, y);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`${visitProofData.location.lat.toFixed(6)}, ${visitProofData.location.lng.toFixed(6)}`, 35, y);
-            }
+                doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
+                doc.setFontSize(10);
+                doc.text(String(formNo || ''), 105, 30, { align: 'center' });
 
-            // Score Box
-            y += 10;
-            const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
-            doc.setFillColor(...scoreColor);
-            doc.roundedRect(15, y, 40, 20, 3, 3, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`${score}`, 35, y + 13, { align: 'center' });
-            doc.setFontSize(8);
-            doc.text(score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR', 35, y + 18, { align: 'center' });
-
-            // Checklist Table
-            y += 30;
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('CHECKLIST RESULTS', 15, y);
-            y += 5;
-
-            doc.setFontSize(8);
-            const categories = [
-                { key: 'ambiance', name: 'STORE AMBIANCE' },
-                { key: 'display', name: 'DISPLAY' },
-                { key: 'admin', name: 'STORE ADMINISTRASI' },
-                { key: 'cleaning', name: 'STORE CLEANING' },
-                { key: 'spg', name: 'SPG' },
-                { key: 'stock', name: 'STOCK' }
-            ];
-
-            categories.forEach(cat => {
-                y += 6;
-                if (y > 270) { doc.addPage(); y = 20; }
-                doc.setFont('helvetica', 'bold');
-                doc.setFillColor(240, 240, 240);
-                doc.rect(15, y - 4, 180, 6, 'F');
-                doc.text(cat.name, 17, y);
-                y += 4;
-
-                CHECKLIST_DATA[cat.key].forEach(item => {
-                    if (y > 280) { doc.addPage(); y = 20; }
-                    const answer = checklistAnswers[item.no] || '-';
-                    const answerColor = answer === 'yes' ? [40, 167, 69] : answer === 'no' ? [220, 53, 69] : [108, 117, 125];
-
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(0, 0, 0);
-                    doc.text(`${item.no}.`, 17, y);
-
-                    const textLines = doc.splitTextToSize(item.text, 140);
-                    doc.text(textLines, 25, y);
-
-                    doc.setTextColor(...answerColor);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(answer.toUpperCase(), 175, y);
-
-                    y += textLines.length * 4 + 2;
-                });
-            });
-
-            // Comment
-            if (comment) {
-                y += 5;
-                if (y > 260) { doc.addPage(); y = 20; }
+                // Store Info
                 doc.setTextColor(0, 0, 0);
+                doc.setFontSize(11);
+                let y = 45;
                 doc.setFont('helvetica', 'bold');
-                doc.text('COMMENT:', 15, y);
-                y += 5;
+                doc.text('Store:', 15, y);
                 doc.setFont('helvetica', 'normal');
-                const commentLines = doc.splitTextToSize(comment, 180);
-                doc.text(commentLines, 15, y);
-            }
+                doc.text(String(storeName || ''), 35, y);
 
-            // Return as base64 (remove data:application/pdf;base64, prefix)
-            const pdfOutput = doc.output('datauristring');
-            return pdfOutput.split(',')[1];
+                y += 7;
+                doc.setFont('helvetica', 'bold');
+                doc.text('Date:', 15, y);
+                doc.setFont('helvetica', 'normal');
+                try {
+                    doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 35, y);
+                } catch(e) {
+                    doc.text(String(visitDate || ''), 35, y);
+                }
+
+                y += 7;
+                doc.setFont('helvetica', 'bold');
+                doc.text('Visitor:', 15, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(visitorName || ''), 45, y);
+
+                y += 7;
+                doc.setFont('helvetica', 'bold');
+                doc.text('Area:', 15, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(areaName || ''), 35, y);
+
+                // Score
+                y += 15;
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('SCORE: ' + String(score) + '%', 15, y);
+
+                y += 7;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                const category = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
+                doc.text('Category: ' + category, 15, y);
+
+                // Checklist Summary
+                y += 15;
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CHECKLIST SUMMARY', 15, y);
+                y += 7;
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+
+                let yesCount = 0, noCount = 0, naCount = 0;
+                Object.values(checklistAnswers).forEach(a => {
+                    if (a === 'yes') yesCount++;
+                    else if (a === 'no') noCount++;
+                    else if (a === 'na') naCount++;
+                });
+
+                doc.text('YES: ' + yesCount, 15, y);
+                doc.text('NO: ' + noCount, 50, y);
+                doc.text('N/A: ' + naCount, 85, y);
+
+                // Comment
+                if (comment) {
+                    y += 15;
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('COMMENT:', 15, y);
+                    y += 5;
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(String(comment).substring(0, 500), 15, y);
+                }
+
+                // Return as base64
+                const pdfOutput = doc.output('datauristring');
+                return pdfOutput.split(',')[1];
+            } catch (err) {
+                console.error('PDF Error:', err);
+                return '';
+            }
         }
 
         // ========================================
