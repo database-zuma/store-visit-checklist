@@ -2279,14 +2279,15 @@
         const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwvyt3E67BmCjcHyE1C3_0RUYwT0BrFnTbyL9nNkt1-iX3cAbuIfsvs7CFtb52q-tE6mA/exec';
 
         const AREA_DATA = {
-            'bali1': { name: 'Bali 1', bm: 'Tomi', as: 'Wempy', stores: ['Bajera', 'Level 21', 'Lippo Bali', 'Jembrana', 'Ubud', 'Tabanan', 'Batubulan', 'Tanah Lot', 'Kapal'] },
-            'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Budiono', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Karangasem', 'Klungkung', 'Peguyangan', 'Pemogan', 'Monang Maning', 'Bangli', 'Lebah Peliatan'] },
-            'bali3': { name: 'Bali 3', bm: 'Tomi', as: 'Manda', stores: ['MBG', 'Kedonganan', 'Kesiman', 'Peliatan', 'Penatih', 'Panjer', 'Seririt', 'Singaraja', 'Uluwatu'] },
-            'jatim': { name: 'Jawa Timur', bm: 'Kusdiyan', as: 'Ninik', stores: ['Lippo SDA', 'PTC', 'Galaxy', 'Matos', 'Lippo Batu', 'Tunjungan Plaza', 'Royal', 'Icon Mall Gresik', 'City of Tomorrow', 'Sunrise Mall Mojokerto', 'Mall Olympic Garden'] },
-            'lombok': { name: 'Lombok', bm: 'Ariel', as: 'Laras', stores: ['Mataram', 'Epicentrum'] },
+            'bali1': { name: 'Bali 1', bm: 'Tomi', as: 'Wempy', stores: ['Bajera', 'Level 21', 'Jembrana', 'Penatih', 'Peguyangan', 'Tabanan', 'Monang Maning', 'Batubulan', 'Kapal'] },
+            'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Erlang', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Klungkung', 'Lippo Bali', 'Pemogan', 'Bangli', 'Karangasem'] },
+            'bali3': { name: 'Bali 3', bm: 'Tomi', as: 'Manda', stores: ['MBG', 'Kedonganan', 'Kesiman', 'Ubud', 'Peliatan', 'Panjer', 'Seririt', 'Singaraja', 'Lebah Peliatan', 'Uluwatu'] },
+            'jatim': { name: 'Jawa Timur', bm: 'Kusdiyan', as: 'Ninik', stores: ['Lippo SDA', 'PTC', 'Galaxy', 'Matos', 'Lippo Batu', 'Tunjungan Plaza', 'Royal', 'Icon Mall Gresik', 'CITO', 'Sunrise Mall Mojokerto', 'MOG'] },
+            'lombok': { name: 'Lombok', bm: 'Ariel', as: 'Lara Sati', stores: ['Mataram', 'Epicentrum'] },
             'jakarta': { name: 'Jakarta', bm: 'Christine', as: 'Irfa', stores: ['Pluit Village', 'MOI', 'LMP', 'Bintaro Xchange'] },
-            'sulawesi': { name: 'Sulawesi', bm: null, as: 'Dian', stores: ['Mega Mall'] },
-            'sumatera': { name: 'Sumatera', bm: 'Arvina', as: null, stores: ['Ska Mall', 'Nagoya Hills'] }
+            'sulawesi': { name: 'Sulawesi', bm: null, as: 'Dian', stores: ['Mega Mall'], asHasBmAccess: true },
+            'sumatera': { name: 'Sumatera', bm: 'Yusuf', as: null, stores: ['Ska Mall'], bmHasAsAccess: true },
+            'batam': { name: 'Batam', bm: 'Arvina', as: null, stores: ['Nagoya Hills'], bmHasAsAccess: true }
         };
 
         // Target: 1 visit per store per month
@@ -2452,22 +2453,40 @@
             initUserDisplay();
             initDashboard();
 
-            // BM, Admin, dan HO hanya bisa melihat, tidak bisa input checklist
-            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
-                document.querySelector('.container').classList.add('bm-view');
-                document.getElementById('bmWelcome').style.display = 'block';
+            // Check special access flags
+            const userArea = currentUser.area;
+            const areaData = typeof userArea === 'string' ? AREA_DATA[userArea] : null;
+            const asHasBmAccess = areaData && areaData.asHasBmAccess && currentUser.role === 'as';
+            const bmHasAsAccess = areaData && areaData.bmHasAsAccess && currentUser.role === 'bm';
 
-                // Set welcome message based on role
-                if (currentUser.role === 'admin') {
-                    document.getElementById('welcomeTitle').innerHTML = '&#128736; Selamat Datang, Administrator!';
-                    document.getElementById('welcomeDesc').innerHTML = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.<br><button onclick="openAdminPanel()" style="margin-top:10px;padding:8px 15px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;">&#128736; Kelola User</button>';
-                } else if (currentUser.role === 'ho') {
-                    document.getElementById('welcomeTitle').innerHTML = '&#127970; Selamat Datang, Head Office!';
-                    document.getElementById('welcomeDesc').textContent = 'Anda dapat memonitor semua visit dari seluruh area Indonesia.';
-                    initHODashboard();
+            // BM, Admin, HO, dan AS dengan akses BM (Sulawesi) hanya bisa melihat
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho' || asHasBmAccess) {
+                // BM dengan akses AS (Sumatera, Batam) tetap bisa input checklist
+                if (bmHasAsAccess) {
+                    initStoreDropdown();
+                    initChecklists();
+                    hideScoreForAS();
+                    document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('bmWelcome').style.display = 'none';
                 } else {
-                    document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
-                    document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
+                    document.querySelector('.container').classList.add('bm-view');
+                    document.getElementById('bmWelcome').style.display = 'block';
+
+                    // Set welcome message based on role
+                    if (currentUser.role === 'admin') {
+                        document.getElementById('welcomeTitle').innerHTML = '&#128736; Selamat Datang, Administrator!';
+                        document.getElementById('welcomeDesc').innerHTML = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.<br><button onclick="openAdminPanel()" style="margin-top:10px;padding:8px 15px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;">&#128736; Kelola User</button>';
+                    } else if (currentUser.role === 'ho') {
+                        document.getElementById('welcomeTitle').innerHTML = '&#127970; Selamat Datang, Head Office!';
+                        document.getElementById('welcomeDesc').textContent = 'Anda dapat memonitor semua visit dari seluruh area Indonesia.';
+                        initHODashboard();
+                    } else if (asHasBmAccess) {
+                        document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, ' + currentUser.name + '!';
+                        document.getElementById('welcomeDesc').textContent = 'Sebagai AS Sulawesi (tanpa BM), Anda dapat memonitor dan memberikan review visit.';
+                    } else {
+                        document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
+                        document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
+                    }
                 }
             } else {
                 initStoreDropdown();
@@ -3064,7 +3083,8 @@
                 'Jakarta': ['jakarta'],
                 'Lombok': ['lombok'],
                 'Sulawesi': ['sulawesi'],
-                'Sumatera': ['sumatera']
+                'Sumatera': ['sumatera'],
+                'Batam': ['batam']
             };
 
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
