@@ -2240,6 +2240,8 @@
         // ========================================
         // DATA CONFIGURATION
         // ========================================
+        const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbxxsev-eBiyVl-c9kwfgfU-laUs8URndsDQtYUBPMxwH6Zr0yVEUlpMUNhLaYsCLtnN8w/exec';
+
         const AREA_DATA = {
             'bali1': { name: 'Bali 1', bm: 'Tomi', as: 'Wempy', stores: ['Bajera', 'Level 21', 'Lippo Bali', 'Jembrana', 'Ubud', 'Tabanan', 'Batubulan', 'Tanah Lot', 'Kapal'] },
             'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Budiono', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Karangasem', 'Klungkung', 'Peguyangan', 'Pemogan', 'Monang Maning', 'Bangli', 'Lebah Peliatan'] },
@@ -3162,6 +3164,21 @@
             archive.splice(itemIndex, 1);
             localStorage.setItem('visit_archive', JSON.stringify(archive));
 
+            // Delete from Google Sheets
+            try {
+                fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        formNo: formNo
+                    })
+                });
+            } catch (e) {
+                console.log('Google Sheets delete error:', e);
+            }
+
             // Refresh archive list
             filterArchive();
 
@@ -3327,14 +3344,35 @@
             const idx = archive.findIndex(a => a.formNo === currentDetailFormNo);
             if (idx === -1) return;
 
+            const reviewedAt = new Date().toISOString();
+
             archive[idx].bmReview = {
                 comment: reviewText,
                 reviewerName: currentUser.name,
                 reviewerRole: currentUser.role,
-                reviewedAt: new Date().toISOString()
+                reviewedAt: reviewedAt
             };
 
             localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Sync BM Review to Google Sheets
+            try {
+                fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateReview',
+                        formNo: currentDetailFormNo,
+                        bmReview: reviewText,
+                        bmReviewBy: currentUser.name,
+                        bmReviewDate: reviewedAt
+                    })
+                });
+            } catch (e) {
+                console.log('Google Sheets review sync error:', e);
+            }
+
             alert('Review berhasil disimpan!');
             closeArchiveDetail();
             loadArchive();
@@ -3348,7 +3386,7 @@
         // ========================================
         // SAVE VISIT
         // ========================================
-        function saveVisit() {
+        async function saveVisit() {
             const storeName = document.getElementById('storeName').value;
             const visitDate = document.getElementById('visitDate').value;
             const visitorName = document.getElementById('visitorName').value.trim();
@@ -3372,9 +3410,14 @@
             const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
             const formNo = `VIS-${dateStr}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
 
-            // Save to archive
-            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
-            archive.unshift({
+            // Get area name
+            const area = getAreaForStore(storeName);
+            const areaName = area ? area.name : '';
+
+            const createdAt = new Date().toISOString();
+
+            // Data to save
+            const visitData = {
                 formNo,
                 storeName,
                 visitDate,
@@ -3383,15 +3426,43 @@
                 remarks: { ...checklistRemarks },
                 photos: { ...checklistPhotos },
                 visitorName,
+                areaName,
                 comment,
                 visitProof: {
                     photo: visitProofData.photo,
                     timestamp: visitProofData.timestamp,
                     location: visitProofData.location
                 },
-                createdAt: new Date().toISOString()
-            });
+                createdAt
+            };
+
+            // Save to localStorage
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            archive.unshift(visitData);
             localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Save to Google Sheets (async, don't wait)
+            try {
+                fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'save',
+                        formNo,
+                        storeName,
+                        visitDate,
+                        score,
+                        visitorName,
+                        areaName,
+                        comment,
+                        createdAt,
+                        answers: checklistAnswers
+                    })
+                });
+            } catch (e) {
+                console.log('Google Sheets sync error:', e);
+            }
 
             alert('Visit berhasil disimpan!');
 
