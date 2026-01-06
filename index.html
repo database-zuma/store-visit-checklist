@@ -2394,9 +2394,20 @@
         });
 
         function initUsers() {
-            let users = JSON.parse(localStorage.getItem('visit_users') || 'null');
-            if (!users) {
-                localStorage.setItem('visit_users', JSON.stringify(DEFAULT_USERS));
+            let users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+
+            // Selalu pastikan DEFAULT_USERS ada di localStorage
+            let updated = false;
+            DEFAULT_USERS.forEach(defaultUser => {
+                const exists = users.some(u => u.username.toLowerCase() === defaultUser.username.toLowerCase());
+                if (!exists) {
+                    users.push(defaultUser);
+                    updated = true;
+                }
+            });
+
+            if (updated || users.length === 0) {
+                localStorage.setItem('visit_users', JSON.stringify(users));
             }
         }
 
