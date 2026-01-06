@@ -2253,6 +2253,9 @@
                     <select id="filterArea" onchange="onAreaFilterChange()">
                         <option value="">Semua Area</option>
                     </select>
+                    <select id="filterBM" onchange="onBMFilterChange()" style="display: none;">
+                        <option value="">Semua BM</option>
+                    </select>
                     <select id="filterAS" onchange="onASFilterChange()" style="display: none;">
                         <option value="">Semua AS</option>
                     </select>
@@ -3111,7 +3114,7 @@
 
             let hoHtml = `
                 <div style="margin-top: 20px;">
-                    <h3 style="color: #1a1a2e; margin-bottom: 15px;">&#127970; Regional Dashboard - ${now.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}</h3>
+                    <h3 style="color: #e94560; margin-bottom: 15px; font-size: 1.2rem;">&#127970; Regional Dashboard - ${now.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
             `;
 
@@ -3243,11 +3246,13 @@
             const bmDashboard = document.getElementById('bmDashboard');
             const leaderboard = document.getElementById('leaderboard');
             const filterAS = document.getElementById('filterAS');
+            const filterBM = document.getElementById('filterBM');
             const filterArea = document.getElementById('filterArea');
 
             if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
                 bmDashboard.style.display = 'grid';
                 leaderboard.style.display = 'block';
+                filterBM.style.display = 'block';
                 filterAS.style.display = 'block';
                 filterArea.style.display = 'block';
 
@@ -3309,6 +3314,16 @@
                 });
                 filterArea.innerHTML = '<option value="">Semua Area</option>' + availableAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 
+                // BM filter - show ALL unique BMs in managed areas
+                let availableBM = [];
+                availableAreas.forEach(area => {
+                    const areaData = AREA_DATA[area.id];
+                    if (areaData && areaData.bm && !availableBM.includes(areaData.bm)) {
+                        availableBM.push(areaData.bm);
+                    }
+                });
+                filterBM.innerHTML = '<option value="">Semua BM</option>' + availableBM.map(n => `<option value="${n}">${n}</option>`).join('');
+
                 // AS filter - show ALL AS in managed areas (not just visited)
                 let availableAS = [];
                 availableAreas.forEach(area => {
@@ -3321,6 +3336,7 @@
             } else {
                 bmDashboard.style.display = 'none';
                 leaderboard.style.display = 'none';
+                filterBM.style.display = 'none';
                 filterAS.style.display = 'none';
                 filterArea.style.display = 'none';
             }
@@ -3421,10 +3437,42 @@
             filterArchive();
         }
 
+        // When BM filter changes, update area, AS, and store filter options
+        function onBMFilterChange() {
+            const bmName = document.getElementById('filterBM').value;
+            const areaFilter = document.getElementById('filterArea');
+            const asFilter = document.getElementById('filterAS');
+            const storeFilter = document.getElementById('filterStore');
+
+            if (bmName) {
+                // Find areas managed by this BM
+                let bmAreas = [];
+                let bmAS = [];
+                let bmStores = [];
+                for (const [id, area] of Object.entries(AREA_DATA)) {
+                    if (area.bm === bmName) {
+                        bmAreas.push({ id, name: area.name });
+                        if (area.as) bmAS.push(area.as);
+                        bmStores = bmStores.concat(area.stores);
+                    }
+                }
+                areaFilter.innerHTML = '<option value="">Semua Area</option>' + bmAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+                asFilter.innerHTML = '<option value="">Semua AS</option>' + bmAS.map(n => `<option value="${n}">${n}</option>`).join('');
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + bmStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else {
+                // Reset to show all
+                openArchive();
+                return;
+            }
+
+            filterArchive();
+        }
+
         function filterArchive() {
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
             const stores = getUserStores().map(s => s.store);
             const areaFilter = document.getElementById('filterArea').value;
+            const bmFilter = document.getElementById('filterBM').value;
             const storeFilter = document.getElementById('filterStore').value;
             const asFilter = document.getElementById('filterAS').value;
             const scoreFilter = document.getElementById('filterScore').value;
@@ -3432,6 +3480,17 @@
             let filtered = archive;
             if (currentUser.role === 'as') filtered = filtered.filter(a => a.visitorName === currentUser.name);
             else if (currentUser.role === 'bm') filtered = filtered.filter(a => stores.includes(a.storeName));
+
+            // Filter by BM - get all stores managed by this BM
+            if (bmFilter) {
+                let bmStores = [];
+                for (const [id, area] of Object.entries(AREA_DATA)) {
+                    if (area.bm === bmFilter) {
+                        bmStores = bmStores.concat(area.stores);
+                    }
+                }
+                filtered = filtered.filter(a => bmStores.includes(a.storeName));
+            }
 
             // Filter by area
             if (areaFilter) {
