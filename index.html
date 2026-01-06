@@ -3168,8 +3168,7 @@
             try {
                 fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'delete',
                         formNo: formNo
@@ -3359,8 +3358,7 @@
             try {
                 fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'updateReview',
                         formNo: currentDetailFormNo,
@@ -3459,8 +3457,7 @@
             try {
                 fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'save',
                         formNo,
