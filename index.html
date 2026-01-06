@@ -3143,7 +3143,8 @@
 
                         areaDetails.push({
                             name: area.name,
-                            as: area.as || '-',
+                            bm: area.bm || 'tidak ada',
+                            as: area.as || 'tidak ada',
                             stores: storeCount,
                             visits: areaVisitCount
                         });
@@ -3169,7 +3170,12 @@
                             <span>${progress}% Target</span>
                         </div>
                         <div style="border-top: 1px solid #eee; padding-top: 10px; font-size: 12px;">
-                            ${areaDetails.map(a => `<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${a.name}</span><span style="color:#666;">AS: ${a.as} | ${a.visits}/${a.stores}</span></div>`).join('')}
+                            ${areaDetails.map(a => `
+                                <div style="padding:5px 0; border-bottom: 1px dashed #eee;">
+                                    <div style="font-weight:600; color:#1a1a2e; margin-bottom:3px;">${a.name} <span style="float:right; color:#666;">${a.visits}/${a.stores} visit</span></div>
+                                    <div style="color:#666;">BM: ${a.bm} | AS: ${a.as}</div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
