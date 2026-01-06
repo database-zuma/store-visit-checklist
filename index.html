@@ -938,6 +938,140 @@
             transform: translateY(-2px);
         }
 
+        .bm-welcome-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .bm-welcome .btn-view-rules {
+            padding: 15px 40px;
+            background: #16213e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .bm-welcome .btn-view-rules:hover {
+            background: #0f3460;
+            transform: translateY(-2px);
+        }
+
+        /* Rules Modal */
+        .rules-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .rules-modal.show {
+            display: flex;
+        }
+
+        .rules-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .rules-header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rules-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .rules-body {
+            padding: 25px;
+        }
+
+        .rules-section {
+            margin-bottom: 25px;
+        }
+
+        .rules-section h3 {
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 5px;
+        }
+
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .rules-table th, .rules-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .rules-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .rules-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .rules-formula {
+            background: #1a1a2e;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .rules-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .score-badge.good { background: #d4edda; color: #155724; }
+        .score-badge.average { background: #fff3cd; color: #856404; }
+        .score-badge.poor { background: #f8d7da; color: #721c24; }
+
         /* Archive Detail Modal */
         .archive-detail-modal {
             display: none;
@@ -1744,7 +1878,10 @@
             <div class="bm-welcome" id="bmWelcome" style="display: none;">
                 <h2 id="welcomeTitle">&#128188; Selamat Datang!</h2>
                 <p id="welcomeDesc">Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.</p>
-                <button class="btn-view-archive" onclick="openArchive()">&#128203; Lihat Arsip Visit</button>
+                <div class="bm-welcome-buttons">
+                    <button class="btn-view-archive" onclick="openArchive()">&#128203; Lihat Arsip Visit</button>
+                    <button class="btn-view-rules" onclick="openRules()">&#128220; Lihat Rules Penilaian</button>
+                </div>
             </div>
 
             <!-- Progress Checklist -->
@@ -1931,6 +2068,112 @@
             </div>
             <div class="archive-detail-body" id="archiveDetailBody">
                 <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div class="rules-modal" id="rulesModal">
+        <div class="rules-content">
+            <div class="rules-header">
+                <h2>&#128220; Rules Penilaian Visit</h2>
+                <button class="modal-close" onclick="closeRules()">&times;</button>
+            </div>
+            <div class="rules-body">
+                <div class="rules-section">
+                    <h3>&#127919; Sistem Penilaian</h3>
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>Jawaban</th>
+                                <th>Keterangan</th>
+                                <th>Dihitung?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong style="color:#28a745;">YES</strong></td>
+                                <td>Item sesuai standar</td>
+                                <td>&#9989; Ya (sebagai benar)</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color:#dc3545;">NO</strong></td>
+                                <td>Item tidak sesuai standar</td>
+                                <td>&#9989; Ya (sebagai salah)</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color:#6c757d;">N/A</strong></td>
+                                <td>Item tidak berlaku untuk store ini</td>
+                                <td>&#10060; Tidak dihitung</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="rules-section">
+                    <h3>&#128202; Rumus Perhitungan Score</h3>
+                    <div class="rules-formula">
+                        Score = (Jumlah YES &divide; (Jumlah YES + Jumlah NO)) &times; 100
+                    </div>
+                    <p><strong>Contoh:</strong> YES = 35, NO = 5, N/A = 2</p>
+                    <div class="rules-formula">
+                        Score = (35 &divide; 40) &times; 100 = <strong>87.5 ≈ 88</strong>
+                    </div>
+                    <div class="rules-note">
+                        <strong>&#128161; Catatan:</strong> N/A tidak mempengaruhi score sama sekali. Hanya YES dan NO yang masuk perhitungan.
+                    </div>
+                </div>
+
+                <div class="rules-section">
+                    <h3>&#127942; Kategori Score</h3>
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>Range Score</th>
+                                <th>Kategori</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>80 - 100</strong></td>
+                                <td><span class="score-badge good">Good</span></td>
+                                <td>&#128994; Sangat Baik</td>
+                            </tr>
+                            <tr>
+                                <td><strong>60 - 79</strong></td>
+                                <td><span class="score-badge average">Average</span></td>
+                                <td>&#128993; Cukup</td>
+                            </tr>
+                            <tr>
+                                <td><strong>&lt; 60</strong></td>
+                                <td><span class="score-badge poor">Poor</span></td>
+                                <td>&#128308; Perlu Perbaikan</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="rules-section">
+                    <h3>&#128203; Total Item Checklist</h3>
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>Kategori</th>
+                                <th>Jumlah Item</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Store Ambiance</td><td>10 item</td></tr>
+                            <tr><td>Display</td><td>8 item</td></tr>
+                            <tr><td>Store Administrasi</td><td>8 item</td></tr>
+                            <tr><td>Store Cleaning</td><td>7 item</td></tr>
+                            <tr><td>SPG</td><td>7 item</td></tr>
+                            <tr><td>Stock</td><td>2 item</td></tr>
+                            <tr style="background:#1a1a2e;color:white;"><td><strong>TOTAL</strong></td><td><strong>42 item</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -2622,6 +2865,22 @@
         function closeArchive() {
             document.getElementById('archiveModal').classList.remove('show');
         }
+
+        // ========================================
+        // RULES MODAL FUNCTIONS
+        // ========================================
+        function openRules() {
+            document.getElementById('rulesModal').classList.add('show');
+        }
+
+        function closeRules() {
+            document.getElementById('rulesModal').classList.remove('show');
+        }
+
+        // Close rules modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'rulesModal') closeRules();
+        });
 
         // Helper: get area name for a store
         function getAreaForStore(storeName) {
