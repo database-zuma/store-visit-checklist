@@ -3424,15 +3424,8 @@
             let pdfBase64 = '';
             try {
                 pdfBase64 = generatePdfBase64(formNo, storeName, visitDate, visitorName, areaName, score, comment);
-                console.log('PDF generated, length:', pdfBase64.length);
             } catch (e) {
                 console.log('PDF generation error:', e);
-                alert('Error generating PDF: ' + e.message);
-            }
-
-            // Debug: show PDF status
-            if (pdfBase64.length < 100) {
-                alert('WARNING: PDF tidak ter-generate! Length: ' + pdfBase64.length);
             }
 
             // Data to save
@@ -3545,7 +3538,7 @@
                 const checkInTime = new Date(visitProofData.timestamp);
                 doc.text(checkInTime.toLocaleString('id-ID'), 35, y);
             }
-            if (visitProofData.location) {
+            if (visitProofData.location && typeof visitProofData.location.lat === 'number' && typeof visitProofData.location.lng === 'number') {
                 y += 7;
                 doc.setFont('helvetica', 'bold');
                 doc.text('GPS:', 15, y);
