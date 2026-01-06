@@ -1915,6 +1915,9 @@
                 <button class="btn-secondary" onclick="openArchive()">
                     &#128194; Lihat Arsip
                 </button>
+                <button class="btn-primary" onclick="saveVisit()">
+                    &#128190; Simpan Visit
+                </button>
             </div>
         </div>
     </div>
@@ -3082,6 +3085,64 @@
         document.addEventListener('click', function(e) {
             if (e.target.id === 'archiveDetailModal') closeArchiveDetail();
         });
+
+        // ========================================
+        // SAVE VISIT
+        // ========================================
+        function saveVisit() {
+            const storeName = document.getElementById('storeName').value;
+            const visitDate = document.getElementById('visitDate').value;
+            const visitorName = document.getElementById('visitorName').value.trim();
+            const comment = document.getElementById('commentImprovement').value.trim();
+
+            // Validasi
+            if (!storeName) { alert('Pilih store terlebih dahulu!'); return; }
+            if (!visitProofData.photo) { alert('Upload foto bukti visit terlebih dahulu!'); return; }
+            if (!visitProofData.location && !confirm('Lokasi GPS belum diambil. Lanjutkan tanpa lokasi?')) return;
+            if (Object.keys(checklistAnswers).length < 42 && !confirm('Checklist belum lengkap (' + Object.keys(checklistAnswers).length + '/42). Lanjutkan?')) return;
+
+            // Hitung score
+            let yesCount = 0, noCount = 0;
+            Object.values(checklistAnswers).forEach(a => {
+                if (a === 'yes') yesCount++;
+                else if (a === 'no') noCount++;
+            });
+            const score = (yesCount + noCount) > 0 ? Math.round((yesCount / (yesCount + noCount)) * 100) : 0;
+
+            // Generate form number
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const formNo = `VIS-${dateStr}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
+
+            // Save to archive
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            archive.unshift({
+                formNo,
+                storeName,
+                visitDate,
+                score,
+                answers: { ...checklistAnswers },
+                remarks: { ...checklistRemarks },
+                photos: { ...checklistPhotos },
+                visitorName,
+                comment,
+                visitProof: {
+                    photo: visitProofData.photo,
+                    timestamp: visitProofData.timestamp,
+                    location: visitProofData.location
+                },
+                createdAt: new Date().toISOString()
+            });
+            localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            alert('Visit berhasil disimpan!');
+
+            if (confirm('Buat visit baru?')) {
+                resetForm();
+            }
+
+            // Update dashboard
+            initDashboard();
+        }
 
         // ========================================
         // PDF GENERATION
