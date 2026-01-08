@@ -1956,26 +1956,6 @@
                         <div class="dash-sub">bulan ini</div>
                     </div>
                 </div>
-
-                <!-- Store Status -->
-                <div class="store-status-section">
-                    <div class="store-status-header">
-                        <h3>&#128205; Status Visit Store - <span id="currentMonth"></span></h3>
-                        <div class="badge" id="storeStatusBadge">0/0 Store</div>
-                    </div>
-                    <!-- Filter for BM -->
-                    <div class="store-status-filters" id="storeStatusFilters" style="display: none;">
-                        <select id="dashFilterArea" onchange="onDashAreaFilterChange()">
-                            <option value="">Semua Area</option>
-                        </select>
-                        <select id="dashFilterAS" onchange="updateDashboard()">
-                            <option value="">Semua AS</option>
-                        </select>
-                    </div>
-                    <div class="store-status-list" id="storeStatusList">
-                        <!-- Will be populated by JS -->
-                    </div>
-                </div>
             </div>
 
             <!-- Welcome Section (for BM/Admin) -->
@@ -2758,15 +2738,18 @@
         function initDashboard() {
             const now = new Date();
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            document.getElementById('currentMonth').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+            const currentMonthEl = document.getElementById('currentMonth');
+            if (currentMonthEl) currentMonthEl.textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
 
-            // Show filters for BM, Admin, HO
+            // Show filters for BM, Admin, HO (if element exists)
             const filtersDiv = document.getElementById('storeStatusFilters');
-            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
-                filtersDiv.style.display = 'flex';
-                populateDashFilters();
-            } else {
-                filtersDiv.style.display = 'none';
+            if (filtersDiv) {
+                if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
+                    filtersDiv.style.display = 'flex';
+                    populateDashFilters();
+                } else {
+                    filtersDiv.style.display = 'none';
+                }
             }
 
             updateDashboard();
@@ -2775,6 +2758,7 @@
         function populateDashFilters() {
             const areaFilter = document.getElementById('dashFilterArea');
             const asFilter = document.getElementById('dashFilterAS');
+            if (!areaFilter || !asFilter) return;
 
             // Populate Area filter
             let availableAreas = [];
@@ -2806,9 +2790,11 @@
         }
 
         function onDashAreaFilterChange() {
-            const areaId = document.getElementById('dashFilterArea').value;
+            const areaFilterEl = document.getElementById('dashFilterArea');
             const asFilter = document.getElementById('dashFilterAS');
+            if (!areaFilterEl || !asFilter) return;
 
+            const areaId = areaFilterEl.value;
             if (areaId) {
                 // Show only AS for selected area
                 const areaData = AREA_DATA[areaId];
@@ -2822,8 +2808,10 @@
         }
 
         function updateDashboard() {
-            const areaFilter = document.getElementById('dashFilterArea').value;
-            const asFilter = document.getElementById('dashFilterAS').value;
+            const areaFilterEl = document.getElementById('dashFilterArea');
+            const asFilterEl = document.getElementById('dashFilterAS');
+            const areaFilter = areaFilterEl ? areaFilterEl.value : '';
+            const asFilter = asFilterEl ? asFilterEl.value : '';
 
             // Get stores based on filter
             let stores = [];
@@ -2874,7 +2862,7 @@
             const visitedStores = [...new Set(monthlyVisits.map(v => v.storeName))];
             const pendingStores = stores.filter(s => !visitedStores.includes(s.store));
 
-            // Update dashboard
+            // Update dashboard cards
             document.getElementById('dashVisitCount').textContent = visitCount;
             document.getElementById('dashVisitTarget').textContent = `Target: ${target}`;
             document.getElementById('dashProgress').textContent = `${Math.min(progress, 100)}%`;
@@ -2891,17 +2879,22 @@
             if (progress < 50) ring.classList.add('danger');
             else if (progress < 80) ring.classList.add('warning');
 
-            // Store status list - show area info for BM
-            document.getElementById('storeStatusBadge').textContent = `${visitedStores.length}/${stores.length} Store`;
+            // Store status list (if element exists)
+            const storeStatusBadge = document.getElementById('storeStatusBadge');
             const statusList = document.getElementById('storeStatusList');
-            statusList.innerHTML = stores.map(s => {
-                const isVisited = visitedStores.includes(s.store);
-                const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') && !areaFilter;
-                return `<div class="store-status-item ${isVisited ? 'visited' : 'not-visited'}">
-                    <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
-                    <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
-                </div>`;
-            }).join('');
+            if (storeStatusBadge) {
+                storeStatusBadge.textContent = `${visitedStores.length}/${stores.length} Store`;
+            }
+            if (statusList) {
+                statusList.innerHTML = stores.map(s => {
+                    const isVisited = visitedStores.includes(s.store);
+                    const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') && !areaFilter;
+                    return `<div class="store-status-item ${isVisited ? 'visited' : 'not-visited'}">
+                        <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
+                        <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
+                    </div>`;
+                }).join('');
+            }
         }
 
         // ========================================
