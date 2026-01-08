@@ -2282,7 +2282,7 @@
         const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwvyt3E67BmCjcHyE1C3_0RUYwT0BrFnTbyL9nNkt1-iX3cAbuIfsvs7CFtb52q-tE6mA/exec';
 
         const AREA_DATA = {
-            'bali1': { name: 'Bali 1', bm: 'Tomi', as: 'Wempy', stores: ['Bajera', 'Level 21', 'Jembrana', 'Penatih', 'Peguyangan', 'Tabanan', 'Monang Maning', 'Batubulan', 'Kapal'] },
+            'bali1': { name: 'Bali 1', bm: 'Tomi', bmEmail: 'database@zuma.id', as: 'Wempy', asEmail: 'ilmiahwanwafiputra@gmail.com', stores: ['Bajera', 'Level 21', 'Jembrana', 'Penatih', 'Peguyangan', 'Tabanan', 'Monang Maning', 'Batubulan', 'Kapal'] },
             'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Erlang', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Klungkung', 'Lippo Bali', 'Pemogan', 'Bangli', 'Karangasem'] },
             'bali3': { name: 'Bali 3', bm: 'Tomi', as: 'Manda', stores: ['MBG', 'Kedonganan', 'Kesiman', 'Ubud', 'Peliatan', 'Panjer', 'Seririt', 'Singaraja', 'Lebah Peliatan', 'Uluwatu'] },
             'jatim': { name: 'Jawa Timur', bm: 'Kusdiyan', as: 'Ninik', stores: ['Lippo SDA', 'PTC', 'Galaxy', 'Matos', 'Lippo Batu', 'Tunjungan Plaza', 'Royal', 'Icon Mall Gresik', 'CITO', 'Sunrise Mall Mojokerto', 'MOG'] },
@@ -2297,21 +2297,37 @@
         const VISIT_TARGET_PER_STORE = 1;
 
         const DEFAULT_USERS = [
-            { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all' },
-            { username: 'ho', password: 'ho123', role: 'ho', name: 'Head Office', area: 'all' }
+            { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all', email: 'admin@zuma.id' },
+            { username: 'ho', password: 'ho123', role: 'ho', name: 'Head Office', area: 'all', email: 'ho@zuma.id' }
         ];
 
-        // Generate users
+        // Generate users from AREA_DATA
         for (const [areaId, area] of Object.entries(AREA_DATA)) {
             if (area.as) {
-                DEFAULT_USERS.push({ username: area.as.toLowerCase().replace(/\s+/g, ''), password: 'as123', role: 'as', name: area.as, area: areaId });
+                DEFAULT_USERS.push({
+                    username: area.as.toLowerCase().replace(/\s+/g, ''),
+                    password: 'as123',
+                    role: 'as',
+                    name: area.as,
+                    area: areaId,
+                    email: area.asEmail || ''
+                });
             }
         }
         const bmAdded = new Set();
         for (const [areaId, area] of Object.entries(AREA_DATA)) {
             if (area.bm && !bmAdded.has(area.bm)) {
                 const bmAreas = Object.entries(AREA_DATA).filter(([id, a]) => a.bm === area.bm).map(([id]) => id);
-                DEFAULT_USERS.push({ username: area.bm.toLowerCase().replace(/\s+/g, ''), password: 'bm123', role: 'bm', name: area.bm, area: bmAreas });
+                // Get email from first area with this BM
+                const bmEmail = Object.values(AREA_DATA).find(a => a.bm === area.bm)?.bmEmail || '';
+                DEFAULT_USERS.push({
+                    username: area.bm.toLowerCase().replace(/\s+/g, ''),
+                    password: 'bm123',
+                    role: 'bm',
+                    name: area.bm,
+                    area: bmAreas,
+                    email: bmEmail
+                });
                 bmAdded.add(area.bm);
             }
         }
@@ -3273,6 +3289,33 @@
             return null;
         }
 
+        // Helper: get notification emails based on store and type
+        function getNotificationEmails(storeName, type) {
+            const emails = [];
+            const area = getAreaForStore(storeName);
+
+            if (!area) return emails;
+
+            const areaData = AREA_DATA[area.id];
+            if (!areaData) return emails;
+
+            if (type === 'visit') {
+                // AS submit visit -> notify BM, Admin, HO
+                if (areaData.bmEmail) emails.push(areaData.bmEmail);
+                // Get admin and HO emails from DEFAULT_USERS
+                DEFAULT_USERS.forEach(u => {
+                    if ((u.role === 'admin' || u.role === 'ho') && u.email) {
+                        emails.push(u.email);
+                    }
+                });
+            } else if (type === 'review') {
+                // BM review -> notify AS
+                if (areaData.asEmail) emails.push(areaData.asEmail);
+            }
+
+            return [...new Set(emails)]; // Remove duplicates
+        }
+
         // Helper: get stores for an area
         function getStoresForArea(areaId) {
             return AREA_DATA[areaId] ? AREA_DATA[areaId].stores : [];
@@ -3789,7 +3832,12 @@
 
             localStorage.setItem('visit_archive', JSON.stringify(archive));
 
-            // Sync BM Review to Google Sheets
+            // Get notification emails for AS
+            const storeName = archive[idx].storeName;
+            const notifyEmails = getNotificationEmails(storeName, 'review');
+            const visitorName = archive[idx].visitorName;
+
+            // Sync BM Review to Google Sheets with notification
             try {
                 fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
@@ -3799,7 +3847,13 @@
                         formNo: currentDetailFormNo,
                         bmReview: reviewText,
                         bmReviewBy: currentUser.name,
-                        bmReviewDate: reviewedAt
+                        bmReviewDate: reviewedAt,
+                        // Email notification data
+                        sendNotification: true,
+                        notificationType: 'review',
+                        notifyEmails: notifyEmails,
+                        storeName: storeName,
+                        visitorName: visitorName
                     })
                 });
             } catch (e) {
@@ -3888,7 +3942,10 @@
             archive.unshift(visitData);
             localStorage.setItem('visit_archive', JSON.stringify(archive));
 
-            // Save to Google Sheets with PDF
+            // Get notification emails
+            const notifyEmails = getNotificationEmails(storeName, 'visit');
+
+            // Save to Google Sheets with PDF and send notification
             try {
                 fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
@@ -3903,7 +3960,11 @@
                         areaName,
                         comment,
                         createdAt,
-                        pdfBase64
+                        pdfBase64,
+                        // Email notification data
+                        sendNotification: true,
+                        notificationType: 'visit',
+                        notifyEmails: notifyEmails
                     })
                 });
             } catch (e) {
