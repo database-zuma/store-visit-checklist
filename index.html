@@ -4107,38 +4107,60 @@
 
                 // ===== INFO BOX =====
                 let y = 38;
+                const areaInfo = getAreaForStore(storeName);
+                const bmName = areaInfo && AREA_DATA[areaInfo.id] ? AREA_DATA[areaInfo.id].bm || '-' : '-';
+
                 doc.setDrawColor(200, 200, 200);
                 doc.setLineWidth(0.3);
-                doc.rect(15, y - 3, 180, 22);
+                doc.rect(15, y - 3, 180, 28);
 
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(10);
+
+                const labelX = 20;
+                const valueX = 55;
+                const labelX2 = 115;
+                const valueX2 = 150;
+
+                // Row 1
                 doc.setFont('helvetica', 'bold');
-                doc.text('Store:', 20, y + 3);
+                doc.text('Store', labelX, y + 3);
+                doc.text(':', 50, y + 3);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(storeName || ''), 45, y + 3);
+                doc.text(String(storeName || ''), valueX, y + 3);
 
                 doc.setFont('helvetica', 'bold');
-                doc.text('Tanggal:', 110, y + 3);
+                doc.text('Tanggal', labelX2, y + 3);
+                doc.text(':', 145, y + 3);
                 doc.setFont('helvetica', 'normal');
                 try {
-                    doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 140, y + 3);
+                    doc.text(new Date(visitDate).toLocaleDateString('id-ID'), valueX2, y + 3);
                 } catch(e) {
-                    doc.text(String(visitDate || ''), 140, y + 3);
+                    doc.text(String(visitDate || ''), valueX2, y + 3);
                 }
 
+                // Row 2
                 doc.setFont('helvetica', 'bold');
-                doc.text('Visitor:', 20, y + 11);
+                doc.text('Area Supervisor', labelX, y + 11);
+                doc.text(':', 50, y + 11);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(visitorName || ''), 45, y + 11);
+                doc.text(String(visitorName || ''), valueX, y + 11);
 
                 doc.setFont('helvetica', 'bold');
-                doc.text('Area:', 110, y + 11);
+                doc.text('Area', labelX2, y + 11);
+                doc.text(':', 145, y + 11);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(areaName || ''), 130, y + 11);
+                doc.text(String(areaName || ''), valueX2, y + 11);
+
+                // Row 3
+                doc.setFont('helvetica', 'bold');
+                doc.text('Branch Manager', labelX, y + 19);
+                doc.text(':', 50, y + 19);
+                doc.setFont('helvetica', 'normal');
+                doc.text(bmName, valueX, y + 19);
 
                 // ===== SCORE SUMMARY =====
-                y = 65;
+                y = 72;
                 let yesCount = 0, noCount = 0, naCount = 0;
                 Object.values(checklistAnswers).forEach(a => {
                     if (a === 'yes') yesCount++;
@@ -4167,7 +4189,7 @@
                 doc.text(`Total: ${yesCount + noCount + naCount}`, 85, y + 14);
 
                 // ===== CHECKLIST TABLE =====
-                y = 88;
+                y = 95;
                 const categories = [
                     { key: 'ambiance', name: 'STORE AMBIANCE' },
                     { key: 'display', name: 'DISPLAY' },
@@ -4292,46 +4314,77 @@
 
             // ===== INFO BOX =====
             let y = 38;
+            const areaInfo = getAreaForStore(storeName);
+            const areaName = areaInfo ? areaInfo.area : '';
+            const bmName = areaInfo && AREA_DATA[areaInfo.id] ? AREA_DATA[areaInfo.id].bm || '-' : '-';
+
             doc.setDrawColor(200, 200, 200);
             doc.setLineWidth(0.3);
-            doc.rect(15, y - 3, 180, 28);
+            doc.rect(15, y - 3, 180, 36);
 
             doc.setTextColor(0, 0, 0);
             doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Store:', 20, y + 3);
-            doc.setFont('helvetica', 'normal');
-            doc.text(storeName, 45, y + 3);
+
+            // Row 1: Store & Tanggal
+            const labelX = 20;
+            const valueX = 55;
+            const labelX2 = 115;
+            const valueX2 = 150;
 
             doc.setFont('helvetica', 'bold');
-            doc.text('Tanggal:', 110, y + 3);
+            doc.text('Store', labelX, y + 3);
+            doc.text(':', 50, y + 3);
             doc.setFont('helvetica', 'normal');
-            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y + 3);
+            doc.text(storeName, valueX, y + 3);
 
             doc.setFont('helvetica', 'bold');
-            doc.text('Visitor:', 20, y + 11);
+            doc.text('Tanggal', labelX2, y + 3);
+            doc.text(':', 145, y + 3);
             doc.setFont('helvetica', 'normal');
-            doc.text(visitorName, 45, y + 11);
+            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), valueX2, y + 3);
 
-            if (visitProofData.location) {
-                doc.setFont('helvetica', 'bold');
-                doc.text('Lokasi:', 110, y + 11);
-                doc.setFont('helvetica', 'normal');
-                const locText = visitProofData.location.address ?
-                    visitProofData.location.address.substring(0, 35) + '...' :
-                    `${visitProofData.location.lat}, ${visitProofData.location.lng}`;
-                doc.text(locText, 130, y + 11);
-            }
+            // Row 2: Area Supervisor & Area
+            doc.setFont('helvetica', 'bold');
+            doc.text('Area Supervisor', labelX, y + 11);
+            doc.text(':', 50, y + 11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(visitorName, valueX, y + 11);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Area', labelX2, y + 11);
+            doc.text(':', 145, y + 11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(areaName, valueX2, y + 11);
+
+            // Row 3: BM & Check-in
+            doc.setFont('helvetica', 'bold');
+            doc.text('Branch Manager', labelX, y + 19);
+            doc.text(':', 50, y + 19);
+            doc.setFont('helvetica', 'normal');
+            doc.text(bmName, valueX, y + 19);
 
             if (visitProofData.timestamp) {
                 doc.setFont('helvetica', 'bold');
-                doc.text('Check-in:', 20, y + 19);
+                doc.text('Check-in', labelX2, y + 19);
+                doc.text(':', 145, y + 19);
                 doc.setFont('helvetica', 'normal');
-                doc.text(new Date(visitProofData.timestamp).toLocaleString('id-ID'), 45, y + 19);
+                doc.text(new Date(visitProofData.timestamp).toLocaleString('id-ID'), valueX2, y + 19);
+            }
+
+            // Row 4: Lokasi (if available)
+            if (visitProofData.location) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('Lokasi', labelX, y + 27);
+                doc.text(':', 50, y + 27);
+                doc.setFont('helvetica', 'normal');
+                const locText = visitProofData.location.address ?
+                    visitProofData.location.address.substring(0, 70) :
+                    `${visitProofData.location.lat}, ${visitProofData.location.lng}`;
+                doc.text(locText, valueX, y + 27);
             }
 
             // ===== SCORE SUMMARY BOX =====
-            y = 72;
+            y = 80;
             const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
             const scoreLabel = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
 
@@ -4355,7 +4408,7 @@
             doc.text(`Total: ${yesCount + noCount + naCount}`, 85, y + 14);
 
             // ===== CHECKLIST TABLE =====
-            y = 95;
+            y = 103;
             const categories = [
                 { key: 'ambiance', name: 'STORE AMBIANCE' },
                 { key: 'display', name: 'DISPLAY' },
