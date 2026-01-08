@@ -2325,6 +2325,7 @@
                         <input type="text" id="newUsername" placeholder="Username" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <input type="password" id="newPassword" placeholder="Password" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <input type="text" id="newName" placeholder="Nama Lengkap" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="email" id="newEmail" placeholder="Email (untuk notifikasi)" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <select id="newRole" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                             <option value="">-- Pilih Role --</option>
                             <option value="ho">Head Office</option>
@@ -3461,20 +3462,23 @@
             }
 
             let html = '<table style="width:100%;border-collapse:collapse;">';
-            html += '<thead><tr style="background:#f8f9fa;"><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Username</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Nama</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Role</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Area</th><th style="padding:10px;text-align:center;border-bottom:2px solid #dee2e6;">Aksi</th></tr></thead><tbody>';
+            html += '<thead><tr style="background:#f8f9fa;"><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Username</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Nama</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Email</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Role</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Area</th><th style="padding:10px;text-align:center;border-bottom:2px solid #dee2e6;">Aksi</th></tr></thead><tbody>';
 
             const roleLabels = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor', 'ho': 'Head Office' };
 
             users.forEach(user => {
                 const areaLabel = user.area === 'all' ? 'Semua' : (Array.isArray(user.area) ? user.area.map(a => AREA_DATA[a]?.name || a).join(', ') : (AREA_DATA[user.area]?.name || user.area));
                 const isDefault = DEFAULT_USERS.some(d => d.username === user.username);
+                const userEmail = user.email || '-';
 
                 html += `<tr style="border-bottom:1px solid #dee2e6;">
                     <td style="padding:10px;">${user.username}</td>
                     <td style="padding:10px;">${user.name}</td>
+                    <td style="padding:10px;font-size:12px;">${userEmail}</td>
                     <td style="padding:10px;"><span style="background:${user.role === 'admin' ? '#dc3545' : user.role === 'ho' ? '#6f42c1' : user.role === 'bm' ? '#007bff' : '#28a745'};color:white;padding:2px 8px;border-radius:10px;font-size:12px;">${roleLabels[user.role] || user.role}</span></td>
                     <td style="padding:10px;font-size:12px;">${areaLabel}</td>
                     <td style="padding:10px;text-align:center;">
+                        <button onclick="changeUserEmail('${user.username}')" style="padding:5px 10px;background:#17a2b8;color:white;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Email">&#9993;</button>
                         <button onclick="changeUserPassword('${user.username}')" style="padding:5px 10px;background:#ffc107;color:#000;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Password">&#128273;</button>
                         ${!isDefault ? `<button onclick="deleteUser('${user.username}')" style="padding:5px 10px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;" title="Hapus">&#128465;</button>` : ''}
                     </td>
@@ -3489,11 +3493,12 @@
             const username = document.getElementById('newUsername').value.trim().toLowerCase();
             const password = document.getElementById('newPassword').value;
             const name = document.getElementById('newName').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
             const role = document.getElementById('newRole').value;
             const area = document.getElementById('newArea').value;
 
             if (!username || !password || !name || !role) {
-                alert('Semua field harus diisi!');
+                alert('Username, password, nama, dan role harus diisi!');
                 return;
             }
 
@@ -3504,17 +3509,45 @@
                 return;
             }
 
-            users.push({ username, password, name, role, area: role === 'ho' || role === 'admin' ? 'all' : area });
+            users.push({
+                username,
+                password,
+                name,
+                email: email || '',
+                role,
+                area: role === 'ho' || role === 'admin' ? 'all' : area
+            });
             localStorage.setItem('visit_users', JSON.stringify(users));
 
             // Clear form
             document.getElementById('newUsername').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('newName').value = '';
+            document.getElementById('newEmail').value = '';
             document.getElementById('newRole').value = '';
             document.getElementById('newArea').value = 'all';
 
             alert('User berhasil ditambahkan!');
+            loadUserListAdmin();
+        }
+
+        function changeUserEmail(username) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const user = users.find(u => u.username === username);
+            const currentEmail = user ? (user.email || '') : '';
+
+            const newEmail = prompt('Masukkan email untuk ' + username + ':', currentEmail);
+            if (newEmail === null) return; // cancelled
+
+            const userIndex = users.findIndex(u => u.username === username);
+            if (userIndex === -1) {
+                alert('User tidak ditemukan!');
+                return;
+            }
+
+            users[userIndex].email = newEmail;
+            localStorage.setItem('visit_users', JSON.stringify(users));
+            alert('Email berhasil diubah!');
             loadUserListAdmin();
         }
 
@@ -3561,31 +3594,68 @@
             return null;
         }
 
-        // Helper: get notification emails based on store and type
-        function getNotificationEmails(storeName, type) {
-            const emails = [];
-            const area = getAreaForStore(storeName);
+        // Helper: get user by username
+        function getUserByUsername(username) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            return users.find(u => u.username === username.toLowerCase());
+        }
 
-            if (!area) return emails;
+        // Helper: get user by name
+        function getUserByName(name) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            return users.find(u => u.name === name);
+        }
+
+        // Helper: get BM email for a store's area
+        function getBMEmailForStore(storeName) {
+            const area = getAreaForStore(storeName);
+            if (!area) return null;
 
             const areaData = AREA_DATA[area.id];
-            if (!areaData) return emails;
+            if (!areaData || !areaData.bm) return null;
 
-            if (type === 'visit') {
-                // AS submit visit -> notify BM, Admin, HO
-                if (areaData.bmEmail) emails.push(areaData.bmEmail);
-                // Get admin and HO emails from DEFAULT_USERS
-                DEFAULT_USERS.forEach(u => {
-                    if ((u.role === 'admin' || u.role === 'ho') && u.email) {
-                        emails.push(u.email);
-                    }
+            // Find BM user by name
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const bmUser = users.find(u => u.name === areaData.bm && u.role === 'bm');
+            return bmUser ? bmUser.email : null;
+        }
+
+        // Helper: get AS email for a store's area
+        function getASEmailForStore(storeName) {
+            const area = getAreaForStore(storeName);
+            if (!area) return null;
+
+            const areaData = AREA_DATA[area.id];
+            if (!areaData || !areaData.as) return null;
+
+            // Find AS user by name
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const asUser = users.find(u => u.name === areaData.as && u.role === 'as');
+            return asUser ? asUser.email : null;
+        }
+
+        // Send email notification via Google Apps Script
+        async function sendEmailNotification(type, data) {
+            try {
+                const payload = {
+                    action: 'sendEmail',
+                    type: type, // 'visit' or 'review'
+                    ...data
+                };
+
+                const response = await fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
                 });
-            } else if (type === 'review') {
-                // BM review -> notify AS
-                if (areaData.asEmail) emails.push(areaData.asEmail);
-            }
 
-            return [...new Set(emails)]; // Remove duplicates
+                const result = await response.json();
+                console.log('Email notification result:', result);
+                return result;
+            } catch (error) {
+                console.error('Failed to send email notification:', error);
+                return { success: false, error: error.message };
+            }
         }
 
         // Helper: get stores for an area
@@ -4104,10 +4174,10 @@
 
             localStorage.setItem('visit_archive', JSON.stringify(archive));
 
-            // Get notification emails for AS
+            // Get AS email for notification
             const storeName = archive[idx].storeName;
-            const notifyEmails = getNotificationEmails(storeName, 'review');
             const visitorName = archive[idx].visitorName;
+            const asEmail = getASEmailForStore(storeName);
 
             // Sync BM Review to Google Sheets with notification
             try {
@@ -4120,10 +4190,10 @@
                         bmReview: reviewText,
                         bmReviewBy: currentUser.name,
                         bmReviewDate: reviewedAt,
-                        // Email notification data
-                        sendNotification: true,
+                        // Email notification data (BM review -> notify AS)
+                        sendNotification: asEmail ? true : false,
                         notificationType: 'review',
-                        notifyEmails: notifyEmails,
+                        notifyEmail: asEmail || '',
                         storeName: storeName,
                         visitorName: visitorName
                     })
@@ -4214,8 +4284,8 @@
             archive.unshift(visitData);
             localStorage.setItem('visit_archive', JSON.stringify(archive));
 
-            // Get notification emails
-            const notifyEmails = getNotificationEmails(storeName, 'visit');
+            // Get BM email for notification
+            const bmEmail = getBMEmailForStore(storeName);
 
             // Save to Google Sheets with PDF and send notification
             try {
@@ -4233,10 +4303,10 @@
                         comment,
                         createdAt,
                         pdfBase64,
-                        // Email notification data
-                        sendNotification: true,
+                        // Email notification data (AS submit -> notify BM)
+                        sendNotification: bmEmail ? true : false,
                         notificationType: 'visit',
-                        notifyEmails: notifyEmails
+                        notifyEmail: bmEmail || ''
                     })
                 });
             } catch (e) {
