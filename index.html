@@ -4492,8 +4492,6 @@
 
             // Save archive
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
-            const areaInfo = getAreaForStore(storeName);
-            const areaName = areaInfo ? areaInfo.area : '';
             archive.unshift({
                 formNo,
                 storeName,
