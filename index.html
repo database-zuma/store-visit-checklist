@@ -6,6 +6,7 @@
     <title>Store Visit Checklist - Area Supervisor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -962,6 +963,109 @@
             transform: translateY(-2px);
         }
 
+        /* Dashboard Charts */
+        .dashboard-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .dashboard-header h3 {
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-filter select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .dashboard-filter select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .chart-container canvas {
+            max-height: 300px;
+        }
+
+        .store-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .store-score-table th,
+        .store-score-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .store-score-table th {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .store-score-table td {
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+        }
+
+        .store-score-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .score-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .score-badge.good { background: #28a745; color: white; }
+        .score-badge.average { background: #ffc107; color: #000; }
+        .score-badge.poor { background: #dc3545; color: white; }
+        .score-badge.none { background: #6c757d; color: white; }
+
+        .visit-count-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
         /* Rules Modal */
         .rules-modal {
             display: none;
@@ -1882,6 +1986,39 @@
                     <button class="btn-view-archive" onclick="openArchive()">&#128203; Lihat Arsip Visit</button>
                     <button class="btn-view-rules" onclick="openRules()">&#128220; Lihat Rules Penilaian</button>
                 </div>
+
+                <!-- Dashboard Charts Section -->
+                <div class="dashboard-section" id="dashboardChartSection">
+                    <div class="dashboard-header">
+                        <h3>&#128202; Dashboard Score per Store</h3>
+                        <div class="dashboard-filter">
+                            <select id="chartMonthFilter" onchange="updateChartDashboard()">
+                                <!-- Will be populated by JS -->
+                            </select>
+                            <select id="chartAreaFilter" onchange="updateChartDashboard()">
+                                <option value="">Semua Area</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="storeScoreChart"></canvas>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="store-score-table" id="storeScoreTable">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Area</th>
+                                    <th>Score</th>
+                                    <th>Kategori</th>
+                                    <th>Jumlah Visit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="storeScoreTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Progress Checklist -->
@@ -2526,6 +2663,9 @@
                         document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
                         document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
                     }
+
+                    // Initialize chart dashboard for BM/HO/Admin
+                    initChartDashboard();
                 }
             } else {
                 initStoreDropdown();
@@ -2747,6 +2887,207 @@
                     <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
                     <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
                 </div>`;
+            }).join('');
+        }
+
+        // ========================================
+        // CHART DASHBOARD (BM/HO)
+        // ========================================
+        let storeScoreChartInstance = null;
+
+        function initChartDashboard() {
+            if (currentUser.role !== 'bm' && currentUser.role !== 'ho' && currentUser.role !== 'admin') return;
+
+            // Populate month filter
+            const monthFilter = document.getElementById('chartMonthFilter');
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const now = new Date();
+            let monthOptions = '';
+
+            // Show last 12 months
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const label = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+                const selected = i === 0 ? 'selected' : '';
+                monthOptions += `<option value="${value}" ${selected}>${label}</option>`;
+            }
+            monthFilter.innerHTML = monthOptions;
+
+            // Populate area filter
+            const areaFilter = document.getElementById('chartAreaFilter');
+            let availableAreas = [];
+            if (currentUser.role === 'admin' || currentUser.role === 'ho') {
+                availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
+            } else if (currentUser.role === 'bm') {
+                const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                bmAreas.forEach(areaId => {
+                    const area = AREA_DATA[areaId];
+                    if (area) availableAreas.push({ id: areaId, name: area.name });
+                });
+            }
+            availableAreas.sort((a, b) => {
+                const order = ['bali1', 'bali2', 'bali3', 'jatim', 'lombok', 'jakarta', 'sulawesi', 'sumatera', 'batam'];
+                return order.indexOf(a.id) - order.indexOf(b.id);
+            });
+            areaFilter.innerHTML = '<option value="">Semua Area</option>' + availableAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+            updateChartDashboard();
+        }
+
+        function updateChartDashboard() {
+            const monthValue = document.getElementById('chartMonthFilter').value;
+            const areaValue = document.getElementById('chartAreaFilter').value;
+
+            if (!monthValue) return;
+
+            const [year, month] = monthValue.split('-').map(Number);
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+
+            // Get stores based on filter
+            let stores = [];
+            if (areaValue) {
+                const areaData = AREA_DATA[areaValue];
+                if (areaData) {
+                    stores = areaData.stores.map(s => ({ store: s, area: areaData.name, areaId: areaValue }));
+                }
+            } else {
+                // All stores for this user
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
+                    for (const [areaId, area] of Object.entries(AREA_DATA)) {
+                        area.stores.forEach(s => stores.push({ store: s, area: area.name, areaId }));
+                    }
+                } else if (currentUser.role === 'bm') {
+                    const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                    bmAreas.forEach(areaId => {
+                        const area = AREA_DATA[areaId];
+                        if (area) {
+                            area.stores.forEach(s => stores.push({ store: s, area: area.name, areaId }));
+                        }
+                    });
+                }
+            }
+
+            // Filter visits by selected month
+            const monthlyVisits = archive.filter(v => {
+                const vDate = new Date(v.visitDate);
+                return vDate.getMonth() === (month - 1) && vDate.getFullYear() === year;
+            });
+
+            // Calculate score per store
+            const storeData = stores.map(s => {
+                const storeVisits = monthlyVisits.filter(v => v.storeName === s.store);
+                const visitCount = storeVisits.length;
+                const avgScore = visitCount > 0 ? Math.round(storeVisits.reduce((sum, v) => sum + (v.score || 0), 0) / visitCount) : null;
+                const lastVisit = storeVisits.length > 0 ? storeVisits[0] : null;
+                return {
+                    ...s,
+                    visitCount,
+                    avgScore,
+                    lastVisit,
+                    category: avgScore === null ? 'none' : avgScore >= 80 ? 'good' : avgScore >= 60 ? 'average' : 'poor'
+                };
+            });
+
+            // Sort by score (null at end)
+            storeData.sort((a, b) => {
+                if (a.avgScore === null && b.avgScore === null) return 0;
+                if (a.avgScore === null) return 1;
+                if (b.avgScore === null) return -1;
+                return b.avgScore - a.avgScore;
+            });
+
+            // Update chart
+            renderStoreScoreChart(storeData);
+
+            // Update table
+            renderStoreScoreTable(storeData);
+        }
+
+        function renderStoreScoreChart(storeData) {
+            const ctx = document.getElementById('storeScoreChart').getContext('2d');
+
+            if (storeScoreChartInstance) {
+                storeScoreChartInstance.destroy();
+            }
+
+            const labels = storeData.map(s => s.store);
+            const scores = storeData.map(s => s.avgScore || 0);
+            const colors = storeData.map(s => {
+                if (s.avgScore === null) return 'rgba(108, 117, 125, 0.7)';
+                if (s.avgScore >= 80) return 'rgba(40, 167, 69, 0.8)';
+                if (s.avgScore >= 60) return 'rgba(255, 193, 7, 0.8)';
+                return 'rgba(220, 53, 69, 0.8)';
+            });
+
+            storeScoreChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score',
+                        data: scores,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1').replace('0.7', '1')),
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const store = storeData[context.dataIndex];
+                                    if (store.avgScore === null) return 'Belum ada visit';
+                                    return `Score: ${store.avgScore}% (${store.visitCount}x visit)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: 'rgba(255,255,255,0.7)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderStoreScoreTable(storeData) {
+            const tbody = document.getElementById('storeScoreTableBody');
+
+            if (storeData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;opacity:0.6;">Tidak ada data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = storeData.map(s => {
+                const scoreText = s.avgScore !== null ? `${s.avgScore}%` : '-';
+                const categoryLabel = s.category === 'good' ? 'Good' : s.category === 'average' ? 'Average' : s.category === 'poor' ? 'Poor' : 'Belum Visit';
+
+                return `<tr>
+                    <td><strong>${s.store}</strong></td>
+                    <td>${s.area}</td>
+                    <td><strong>${scoreText}</strong></td>
+                    <td><span class="score-badge ${s.category}">${categoryLabel}</span></td>
+                    <td><span class="visit-count-badge">${s.visitCount}x</span></td>
+                </tr>`;
             }).join('');
         }
 
