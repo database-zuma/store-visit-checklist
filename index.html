@@ -1939,7 +1939,8 @@
                             </svg>
                             <div>
                                 <div class="dash-number" id="dashProgress">0%</div>
-                                <div class="dash-label">Progress</div>
+                                <div class="dash-label">Coverage</div>
+                                <div class="dash-sub" id="dashCoverageSub">0/0 Store</div>
                             </div>
                         </div>
                     </div>
@@ -2853,30 +2854,33 @@
 
             // Calculate metrics
             const visitCount = monthlyVisits.length;
-            const target = stores.length * VISIT_TARGET_PER_STORE;
-            const progress = target > 0 ? Math.round((visitCount / target) * 100) : 0;
             const avgScore = monthlyVisits.length > 0 ? Math.round(monthlyVisits.reduce((sum, v) => sum + v.score, 0) / monthlyVisits.length) : 0;
 
-            // Visited stores this month
+            // Visited stores this month (unique)
             const visitedStores = [...new Set(monthlyVisits.map(v => v.storeName))];
             const pendingStores = stores.filter(s => !visitedStores.includes(s.store));
 
+            // Coverage = unique stores visited / total stores
+            const totalStores = stores.length;
+            const coverage = totalStores > 0 ? Math.round((visitedStores.length / totalStores) * 100) : 0;
+
             // Update dashboard cards
             document.getElementById('dashVisitCount').textContent = visitCount;
-            document.getElementById('dashVisitTarget').textContent = `Target: ${target}`;
-            document.getElementById('dashProgress').textContent = `${Math.min(progress, 100)}%`;
+            document.getElementById('dashVisitTarget').textContent = `dari ${totalStores} toko`;
+            document.getElementById('dashProgress').textContent = `${coverage}%`;
+            document.getElementById('dashCoverageSub').textContent = `${visitedStores.length}/${totalStores} Store`;
             document.getElementById('dashAvgScore').textContent = avgScore > 0 ? avgScore : '-';
             document.getElementById('dashScoreStatus').textContent = avgScore >= 80 ? 'Good' : avgScore >= 60 ? 'Average' : avgScore > 0 ? 'Poor' : '-';
             document.getElementById('dashPendingStore').textContent = pendingStores.length;
 
-            // Progress ring
+            // Progress ring (now based on coverage)
             const ring = document.getElementById('progressRing');
             const circumference = 2 * Math.PI * 25;
-            const offset = circumference - (Math.min(progress, 100) / 100) * circumference;
+            const offset = circumference - (Math.min(coverage, 100) / 100) * circumference;
             ring.style.strokeDashoffset = offset;
             ring.classList.remove('warning', 'danger');
-            if (progress < 50) ring.classList.add('danger');
-            else if (progress < 80) ring.classList.add('warning');
+            if (coverage < 50) ring.classList.add('danger');
+            else if (coverage < 80) ring.classList.add('warning');
 
             // Store status list (if element exists)
             const storeStatusBadge = document.getElementById('storeStatusBadge');
