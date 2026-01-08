@@ -2951,9 +2951,71 @@
         // ========================================
         // ARCHIVE FUNCTIONS
         // ========================================
-        function openArchive() {
-            loadArchive();
+        async function openArchive() {
+            // Show loading
             document.getElementById('archiveModal').classList.add('show');
+            document.getElementById('archiveList').innerHTML = '<p style="text-align:center;padding:20px;">Memuat data dari server...</p>';
+
+            // Sync from Google Sheets first
+            await syncFromGoogleSheets();
+
+            // Then load archive
+            loadArchive();
+        }
+
+        // Sync data from Google Sheets to localStorage
+        async function syncFromGoogleSheets() {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_API + '?action=get');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const sheetsData = result.data;
+                    const localArchive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+
+                    // Merge: add sheets data that's not in local
+                    sheetsData.forEach(sheetItem => {
+                        if (!sheetItem.FormNo) return;
+
+                        const exists = localArchive.some(local => local.formNo === sheetItem.FormNo);
+                        if (!exists) {
+                            localArchive.push({
+                                formNo: sheetItem.FormNo,
+                                storeName: sheetItem.StoreName,
+                                visitDate: sheetItem.VisitDate,
+                                score: sheetItem.Score,
+                                visitorName: sheetItem.VisitorName,
+                                areaName: sheetItem.AreaName,
+                                comment: sheetItem.Comment,
+                                createdAt: sheetItem.CreatedAt,
+                                bmReview: sheetItem.BMReview ? {
+                                    comment: sheetItem.BMReview,
+                                    reviewedAt: sheetItem.BMReviewDate
+                                } : null,
+                                answers: {},
+                                fromSheets: true
+                            });
+                        } else {
+                            // Update BM Review if exists in sheets
+                            const localIdx = localArchive.findIndex(local => local.formNo === sheetItem.FormNo);
+                            if (localIdx !== -1 && sheetItem.BMReview && !localArchive[localIdx].bmReview) {
+                                localArchive[localIdx].bmReview = {
+                                    comment: sheetItem.BMReview,
+                                    reviewedAt: sheetItem.BMReviewDate
+                                };
+                            }
+                        }
+                    });
+
+                    // Sort by date descending
+                    localArchive.sort((a, b) => new Date(b.createdAt || b.visitDate) - new Date(a.createdAt || a.visitDate));
+
+                    localStorage.setItem('visit_archive', JSON.stringify(localArchive));
+                    console.log('Synced ' + sheetsData.length + ' records from Google Sheets');
+                }
+            } catch (e) {
+                console.log('Sync error:', e);
+            }
         }
 
         function closeArchive() {
