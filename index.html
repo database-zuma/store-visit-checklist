@@ -1957,25 +1957,6 @@
                     </div>
                 </div>
 
-                <!-- Store Status -->
-                <div class="store-status-section">
-                    <div class="store-status-header">
-                        <h3>&#128205; Status Visit Store - <span id="currentMonth"></span></h3>
-                        <div class="badge" id="storeStatusBadge">0/0 Store</div>
-                    </div>
-                    <!-- Filter for BM -->
-                    <div class="store-status-filters" id="storeStatusFilters" style="display: none;">
-                        <select id="dashFilterArea" onchange="onDashAreaFilterChange()">
-                            <option value="">Semua Area</option>
-                        </select>
-                        <select id="dashFilterAS" onchange="updateDashboard()">
-                            <option value="">Semua AS</option>
-                        </select>
-                    </div>
-                    <div class="store-status-list" id="storeStatusList">
-                        <!-- Will be populated by JS -->
-                    </div>
-                </div>
             </div>
 
             <!-- Welcome Section (for BM/Admin) -->
@@ -1993,6 +1974,20 @@
                         <h3>&#128202; Dashboard Score per Store</h3>
                         <div class="dashboard-filter">
                             <select id="chartMonthFilter" onchange="updateChartDashboard()">
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                            <select id="chartYearFilter" onchange="updateChartDashboard()">
                                 <!-- Will be populated by JS -->
                             </select>
                             <select id="chartAreaFilter" onchange="updateChartDashboard()">
@@ -2898,21 +2893,21 @@
         function initChartDashboard() {
             if (currentUser.role !== 'bm' && currentUser.role !== 'ho' && currentUser.role !== 'admin') return;
 
-            // Populate month filter
-            const monthFilter = document.getElementById('chartMonthFilter');
-            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             const now = new Date();
-            let monthOptions = '';
 
-            // Show last 12 months
-            for (let i = 0; i < 12; i++) {
-                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                const label = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-                const selected = i === 0 ? 'selected' : '';
-                monthOptions += `<option value="${value}" ${selected}>${label}</option>`;
+            // Set current month as selected
+            const monthFilter = document.getElementById('chartMonthFilter');
+            monthFilter.value = String(now.getMonth() + 1);
+
+            // Populate year filter (current year and 2 years back)
+            const yearFilter = document.getElementById('chartYearFilter');
+            const currentYear = now.getFullYear();
+            let yearOptions = '';
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const selected = y === currentYear ? 'selected' : '';
+                yearOptions += `<option value="${y}" ${selected}>${y}</option>`;
             }
-            monthFilter.innerHTML = monthOptions;
+            yearFilter.innerHTML = yearOptions;
 
             // Populate area filter
             const areaFilter = document.getElementById('chartAreaFilter');
@@ -2936,12 +2931,11 @@
         }
 
         function updateChartDashboard() {
-            const monthValue = document.getElementById('chartMonthFilter').value;
+            const month = parseInt(document.getElementById('chartMonthFilter').value);
+            const year = parseInt(document.getElementById('chartYearFilter').value);
             const areaValue = document.getElementById('chartAreaFilter').value;
 
-            if (!monthValue) return;
-
-            const [year, month] = monthValue.split('-').map(Number);
+            if (!month || !year) return;
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
 
             // Get stores based on filter
