@@ -4283,6 +4283,30 @@
             if (!visitProofData.location && !confirm('Lokasi GPS belum diambil. Lanjutkan tanpa lokasi?')) return;
             if (Object.keys(checklistAnswers).length < 42 && !confirm('Checklist belum lengkap. Lanjutkan?')) return;
 
+            // Check if store already visited this month
+            const existingArchive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const currentMonth = new Date(visitDate).getMonth();
+            const currentYear = new Date(visitDate).getFullYear();
+
+            const storeVisits = existingArchive.filter(v => v.storeName === storeName);
+            const thisMonthVisits = storeVisits.filter(v => {
+                const vDate = new Date(v.visitDate);
+                return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
+            });
+
+            if (thisMonthVisits.length > 0) {
+                const lastVisit = thisMonthVisits[0];
+                const lastVisitDate = new Date(lastVisit.visitDate).toLocaleDateString('id-ID');
+                const totalVisits = storeVisits.length;
+
+                const confirmMsg = `Store "${storeName}" sudah di-visit bulan ini!\n\n` +
+                    `Visit terakhir: ${lastVisitDate}\n` +
+                    `Total visit store ini: ${totalVisits}x\n\n` +
+                    `Lanjutkan visit baru?`;
+
+                if (!confirm(confirmMsg)) return;
+            }
+
             let yesCount = 0, noCount = 0, naCount = 0;
             Object.values(checklistAnswers).forEach(a => {
                 if (a === 'yes') yesCount++;
