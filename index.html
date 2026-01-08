@@ -4092,72 +4092,53 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
 
-                // Header
+                // ===== HEADER =====
                 doc.setFillColor(26, 26, 46);
-                doc.rect(0, 0, 210, 35, 'F');
+                doc.rect(0, 0, 210, 30, 'F');
                 doc.setTextColor(255, 255, 255);
-                doc.setFontSize(18);
+                doc.setFontSize(16);
                 doc.setFont('helvetica', 'bold');
-                doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'normal');
-                doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
+                doc.text('STORE VISIT CHECKLIST', 105, 12, { align: 'center' });
                 doc.setFontSize(10);
-                doc.text(String(formNo || ''), 105, 30, { align: 'center' });
-
-                // Store Info
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(11);
-                let y = 45;
-                doc.setFont('helvetica', 'bold');
-                doc.text('Store:', 15, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(storeName || ''), 35, y);
+                doc.text('Area Supervisor Visit Report', 105, 19, { align: 'center' });
+                doc.setFontSize(9);
+                doc.text(String(formNo || ''), 105, 26, { align: 'center' });
 
-                y += 7;
+                // ===== INFO BOX =====
+                let y = 38;
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.3);
+                doc.rect(15, y - 3, 180, 22);
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
-                doc.text('Date:', 15, y);
+                doc.text('Store:', 20, y + 3);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(storeName || ''), 45, y + 3);
+
+                doc.setFont('helvetica', 'bold');
+                doc.text('Tanggal:', 110, y + 3);
                 doc.setFont('helvetica', 'normal');
                 try {
-                    doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 35, y);
+                    doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 140, y + 3);
                 } catch(e) {
-                    doc.text(String(visitDate || ''), 35, y);
+                    doc.text(String(visitDate || ''), 140, y + 3);
                 }
 
-                y += 7;
                 doc.setFont('helvetica', 'bold');
-                doc.text('Visitor:', 15, y);
+                doc.text('Visitor:', 20, y + 11);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(visitorName || ''), 45, y);
+                doc.text(String(visitorName || ''), 45, y + 11);
 
-                y += 7;
                 doc.setFont('helvetica', 'bold');
-                doc.text('Area:', 15, y);
+                doc.text('Area:', 110, y + 11);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(areaName || ''), 35, y);
+                doc.text(String(areaName || ''), 130, y + 11);
 
-                // Score
-                y += 15;
-                doc.setFontSize(14);
-                doc.setFont('helvetica', 'bold');
-                doc.text('SCORE: ' + String(score) + '%', 15, y);
-
-                y += 7;
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                const category = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
-                doc.text('Category: ' + category, 15, y);
-
-                // Checklist Summary
-                y += 15;
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.text('CHECKLIST SUMMARY', 15, y);
-                y += 7;
-
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-
+                // ===== SCORE SUMMARY =====
+                y = 65;
                 let yesCount = 0, noCount = 0, naCount = 0;
                 Object.values(checklistAnswers).forEach(a => {
                     if (a === 'yes') yesCount++;
@@ -4165,21 +4146,100 @@
                     else if (a === 'na') naCount++;
                 });
 
-                doc.text('YES: ' + yesCount, 15, y);
-                doc.text('NO: ' + noCount, 50, y);
-                doc.text('N/A: ' + naCount, 85, y);
+                const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
+                const scoreLabel = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
 
-                // Comment
-                if (comment) {
-                    y += 15;
+                doc.setFillColor(...scoreColor);
+                doc.roundedRect(15, y, 35, 18, 2, 2, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${score}%`, 32.5, y + 9, { align: 'center' });
+                doc.setFontSize(8);
+                doc.text(scoreLabel, 32.5, y + 15, { align: 'center' });
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`YES: ${yesCount}`, 58, y + 7);
+                doc.text(`NO: ${noCount}`, 58, y + 14);
+                doc.text(`N/A: ${naCount}`, 85, y + 7);
+                doc.text(`Total: ${yesCount + noCount + naCount}`, 85, y + 14);
+
+                // ===== CHECKLIST TABLE =====
+                y = 88;
+                const categories = [
+                    { key: 'ambiance', name: 'STORE AMBIANCE' },
+                    { key: 'display', name: 'DISPLAY' },
+                    { key: 'admin', name: 'STORE ADMINISTRASI' },
+                    { key: 'cleaning', name: 'STORE CLEANING' },
+                    { key: 'spg', name: 'SPG' },
+                    { key: 'stock', name: 'STOCK' }
+                ];
+
+                const tableLeft = 15;
+                const tableWidth = 180;
+                const colNo = 12;
+
+                categories.forEach(cat => {
+                    if (y > 250) { doc.addPage(); y = 15; }
+
+                    doc.setFillColor(15, 52, 96);
+                    doc.rect(tableLeft, y, tableWidth, 7, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(9);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('COMMENT:', 15, y);
-                    y += 5;
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(String(comment).substring(0, 500), 15, y);
-                }
+                    doc.text(cat.name, tableLeft + 3, y + 5);
+                    y += 7;
 
-                // Return as base64
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(tableLeft, y, tableWidth, 6, 'F');
+                    doc.setTextColor(80, 80, 80);
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('No', tableLeft + 3, y + 4);
+                    doc.text('Item Checklist', tableLeft + colNo + 3, y + 4);
+                    doc.text('Status', tableLeft + tableWidth - 12, y + 4);
+                    y += 6;
+
+                    doc.setFontSize(8);
+                    CHECKLIST_DATA[cat.key].forEach((item, idx) => {
+                        if (y > 275) { doc.addPage(); y = 15; }
+
+                        const answer = checklistAnswers[item.no] || '-';
+                        const answerText = answer === 'yes' ? 'YES' : answer === 'no' ? 'NO' : answer === 'na' ? 'N/A' : '-';
+                        const rowHeight = 6;
+
+                        if (idx % 2 === 0) {
+                            doc.setFillColor(252, 252, 252);
+                            doc.rect(tableLeft, y, tableWidth, rowHeight, 'F');
+                        }
+
+                        doc.setDrawColor(220, 220, 220);
+                        doc.setLineWidth(0.2);
+                        doc.line(tableLeft, y + rowHeight, tableLeft + tableWidth, y + rowHeight);
+
+                        doc.setTextColor(100, 100, 100);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`${item.no}`, tableLeft + 3, y + 4);
+
+                        doc.setTextColor(0, 0, 0);
+                        let itemText = item.text;
+                        if (itemText.length > 85) itemText = itemText.substring(0, 82) + '...';
+                        doc.text(itemText, tableLeft + colNo + 2, y + 4);
+
+                        if (answer === 'yes') doc.setTextColor(40, 167, 69);
+                        else if (answer === 'no') doc.setTextColor(220, 53, 69);
+                        else doc.setTextColor(150, 150, 150);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(answerText, tableLeft + tableWidth - 5, y + 4, { align: 'right' });
+
+                        y += rowHeight;
+                    });
+
+                    y += 8;
+                });
+
                 const pdfOutput = doc.output('datauristring');
                 return pdfOutput.split(',')[1];
             } catch (err) {
@@ -4201,92 +4261,101 @@
             if (!visitProofData.location && !confirm('Lokasi GPS belum diambil. Lanjutkan tanpa lokasi?')) return;
             if (Object.keys(checklistAnswers).length < 42 && !confirm('Checklist belum lengkap. Lanjutkan?')) return;
 
-            let yesCount = 0, noCount = 0;
-            Object.values(checklistAnswers).forEach(a => { if (a === 'yes') yesCount++; else if (a === 'no') noCount++; });
+            let yesCount = 0, noCount = 0, naCount = 0;
+            Object.values(checklistAnswers).forEach(a => {
+                if (a === 'yes') yesCount++;
+                else if (a === 'no') noCount++;
+                else if (a === 'na') naCount++;
+            });
             const score = (yesCount + noCount) > 0 ? Math.round((yesCount / (yesCount + noCount)) * 100) : 0;
+            const comment = document.getElementById('commentImprovement').value.trim();
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Header
-            doc.setFillColor(26, 26, 46);
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
-
             // Generate form number
             const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
             const formNo = `VIS-${dateStr}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
+
+            // ===== HEADER =====
+            doc.setFillColor(26, 26, 46);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('STORE VISIT CHECKLIST', 105, 12, { align: 'center' });
             doc.setFontSize(10);
-            doc.text(formNo, 105, 30, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.text('Area Supervisor Visit Report', 105, 19, { align: 'center' });
+            doc.setFontSize(9);
+            doc.text(formNo, 105, 26, { align: 'center' });
 
-            // Store Info
+            // ===== INFO BOX =====
+            let y = 38;
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
+            doc.rect(15, y - 3, 180, 28);
+
             doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-            let y = 45;
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('Store:', 15, y);
+            doc.text('Store:', 20, y + 3);
             doc.setFont('helvetica', 'normal');
-            doc.text(storeName, 35, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Date:', 120, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y);
-            y += 7;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Visitor:', 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(visitorName, 35, y);
+            doc.text(storeName, 45, y + 3);
 
-            // Visit Proof Info
-            if (visitProofData.timestamp) {
-                y += 7;
-                doc.setFont('helvetica', 'bold');
-                doc.text('Check-in:', 15, y);
-                doc.setFont('helvetica', 'normal');
-                const checkInTime = new Date(visitProofData.timestamp);
-                doc.text(checkInTime.toLocaleString('id-ID'), 35, y);
-            }
+            doc.setFont('helvetica', 'bold');
+            doc.text('Tanggal:', 110, y + 3);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y + 3);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Visitor:', 20, y + 11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(visitorName, 45, y + 11);
+
             if (visitProofData.location) {
                 doc.setFont('helvetica', 'bold');
-                doc.text('GPS:', 120, y);
+                doc.text('Lokasi:', 110, y + 11);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`${visitProofData.location.lat}, ${visitProofData.location.lng}`, 133, y);
+                const locText = visitProofData.location.address ?
+                    visitProofData.location.address.substring(0, 35) + '...' :
+                    `${visitProofData.location.lat}, ${visitProofData.location.lng}`;
+                doc.text(locText, 130, y + 11);
             }
 
-            // Visit Proof Photo - small thumbnail
-            if (visitProofData.photo) {
-                try {
-                    doc.addImage(visitProofData.photo, 'JPEG', 15, 62, 25, 25);
-                    doc.setDrawColor(26, 26, 46);
-                    doc.rect(15, 62, 25, 25);
-                    doc.setFontSize(6);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('Bukti Visit', 27.5, 90, { align: 'center' });
-                } catch(e) { console.log('Error adding visit proof image'); }
-            }
-
-            // Score Box - hanya tampil untuk BM & Admin
-            if (currentUser.role !== 'as') {
-                const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
-                doc.setFillColor(...scoreColor);
-                doc.roundedRect(150, 50, 45, 25, 3, 3, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(20);
+            if (visitProofData.timestamp) {
                 doc.setFont('helvetica', 'bold');
-                doc.text(`${score}`, 172.5, 62, { align: 'center' });
-                doc.setFontSize(10);
-                doc.text(score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR', 172.5, 70, { align: 'center' });
+                doc.text('Check-in:', 20, y + 19);
+                doc.setFont('helvetica', 'normal');
+                doc.text(new Date(visitProofData.timestamp).toLocaleString('id-ID'), 45, y + 19);
             }
 
-            // Checklist
+            // ===== SCORE SUMMARY BOX =====
+            y = 72;
+            const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
+            const scoreLabel = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
+
+            // Score box
+            doc.setFillColor(...scoreColor);
+            doc.roundedRect(15, y, 35, 18, 2, 2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${score}%`, 32.5, y + 9, { align: 'center' });
+            doc.setFontSize(8);
+            doc.text(scoreLabel, 32.5, y + 15, { align: 'center' });
+
+            // Summary counts
             doc.setTextColor(0, 0, 0);
-            y = 90;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`YES: ${yesCount}`, 58, y + 7);
+            doc.text(`NO: ${noCount}`, 58, y + 14);
+            doc.text(`N/A: ${naCount}`, 85, y + 7);
+            doc.text(`Total: ${yesCount + noCount + naCount}`, 85, y + 14);
+
+            // ===== CHECKLIST TABLE =====
+            y = 95;
             const categories = [
                 { key: 'ambiance', name: 'STORE AMBIANCE' },
                 { key: 'display', name: 'DISPLAY' },
@@ -4296,67 +4365,82 @@
                 { key: 'stock', name: 'STOCK' }
             ];
 
-            categories.forEach(cat => {
-                if (y > 250) { doc.addPage(); y = 20; }
-                doc.setFillColor(15, 52, 96);
-                doc.rect(15, y, 180, 8, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text(cat.name, 20, y + 5.5);
-                y += 12;
+            const tableLeft = 15;
+            const tableWidth = 180;
+            const colNo = 12;
+            const colAnswer = 18;
+            const colText = tableWidth - colNo - colAnswer;
 
-                doc.setTextColor(0, 0, 0);
+            categories.forEach(cat => {
+                if (y > 250) { doc.addPage(); y = 15; }
+
+                // Category header
+                doc.setFillColor(15, 52, 96);
+                doc.rect(tableLeft, y, tableWidth, 7, 'F');
+                doc.setTextColor(255, 255, 255);
                 doc.setFontSize(9);
-                CHECKLIST_DATA[cat.key].forEach(item => {
-                    if (y > 270) { doc.addPage(); y = 20; }
+                doc.setFont('helvetica', 'bold');
+                doc.text(cat.name, tableLeft + 3, y + 5);
+                y += 7;
+
+                // Table header row
+                doc.setFillColor(240, 240, 240);
+                doc.rect(tableLeft, y, tableWidth, 6, 'F');
+                doc.setTextColor(80, 80, 80);
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'bold');
+                doc.text('No', tableLeft + 3, y + 4);
+                doc.text('Item Checklist', tableLeft + colNo + 3, y + 4);
+                doc.text('Status', tableLeft + tableWidth - 12, y + 4);
+                y += 6;
+
+                doc.setFontSize(8);
+                CHECKLIST_DATA[cat.key].forEach((item, idx) => {
+                    if (y > 275) { doc.addPage(); y = 15; }
+
                     const answer = checklistAnswers[item.no] || '-';
                     const answerText = answer === 'yes' ? 'YES' : answer === 'no' ? 'NO' : answer === 'na' ? 'N/A' : '-';
+                    const rowHeight = 6;
 
+                    // Alternating row color
+                    if (idx % 2 === 0) {
+                        doc.setFillColor(252, 252, 252);
+                        doc.rect(tableLeft, y, tableWidth, rowHeight, 'F');
+                    }
+
+                    // Row border
+                    doc.setDrawColor(220, 220, 220);
+                    doc.setLineWidth(0.2);
+                    doc.line(tableLeft, y + rowHeight, tableLeft + tableWidth, y + rowHeight);
+
+                    // No column
+                    doc.setTextColor(100, 100, 100);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`${item.no}`, tableLeft + 3, y + 4);
+
+                    // Text column (truncate if too long)
+                    doc.setTextColor(0, 0, 0);
+                    let itemText = item.text;
+                    if (itemText.length > 85) itemText = itemText.substring(0, 82) + '...';
+                    doc.text(itemText, tableLeft + colNo + 2, y + 4);
+
+                    // Answer column with color
                     if (answer === 'yes') doc.setTextColor(40, 167, 69);
                     else if (answer === 'no') doc.setTextColor(220, 53, 69);
-                    else doc.setTextColor(108, 117, 125);
-
+                    else doc.setTextColor(150, 150, 150);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(`${item.no}.`, 15, y);
-                    doc.text(answerText, 185, y, { align: 'right' });
+                    doc.text(answerText, tableLeft + tableWidth - 5, y + 4, { align: 'right' });
 
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont('helvetica', 'normal');
-                    const lines = doc.splitTextToSize(item.text, 150);
-                    doc.text(lines, 25, y);
-                    y += lines.length * 5 + 3;
-
-                    if (checklistRemarks[item.no]) {
-                        doc.setTextColor(100, 100, 100);
-                        doc.setFontSize(8);
-                        doc.text(`Remarks: ${checklistRemarks[item.no]}`, 25, y);
-                        y += 5;
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFontSize(9);
-                    }
+                    y += rowHeight;
                 });
-                y += 5;
-            });
 
-            // Comment
-            const comment = document.getElementById('commentImprovement').value.trim();
-            if (comment) {
-                if (y > 240) { doc.addPage(); y = 20; }
-                doc.setFillColor(255, 243, 205);
-                doc.rect(15, y, 180, 25, 'F');
-                doc.setTextColor(133, 100, 4);
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Comment Improvement:', 20, y + 6);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.text(doc.splitTextToSize(comment, 170), 20, y + 12);
-                y += 30;
-            }
+                y += 8;
+            });
 
             // Save archive
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const areaInfo = getAreaForStore(storeName);
+            const areaName = areaInfo ? areaInfo.area : '';
             archive.unshift({
                 formNo,
                 storeName,
@@ -4366,6 +4450,7 @@
                 remarks: { ...checklistRemarks },
                 photos: { ...checklistPhotos },
                 visitorName,
+                areaName,
                 comment,
                 visitProof: {
                     photo: visitProofData.photo,
