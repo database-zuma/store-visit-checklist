@@ -2872,12 +2872,37 @@
             locationEl.textContent = 'Mengambil lokasi...';
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const lat = position.coords.latitude.toFixed(6);
                     const lng = position.coords.longitude.toFixed(6);
-                    visitProofData.location = { lat, lng, accuracy: position.coords.accuracy };
 
-                    locationEl.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9;">${lat}, ${lng}</a>`;
+                    // Get address from coordinates (reverse geocoding)
+                    let address = '';
+                    try {
+                        locationEl.textContent = 'Mengambil alamat...';
+                        const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                            headers: { 'Accept-Language': 'id' }
+                        });
+                        const geoData = await geoResponse.json();
+                        if (geoData && geoData.display_name) {
+                            address = geoData.display_name;
+                        }
+                    } catch (e) {
+                        console.log('Geocoding error:', e);
+                    }
+
+                    visitProofData.location = { lat, lng, accuracy: position.coords.accuracy, address };
+
+                    // Display address and coordinates
+                    if (address) {
+                        locationEl.innerHTML = `
+                            <div style="font-size: 13px; margin-bottom: 5px;">📍 ${address}</div>
+                            <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9; font-size: 12px;">${lat}, ${lng} ↗</a>
+                        `;
+                    } else {
+                        locationEl.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9;">${lat}, ${lng}</a>`;
+                    }
+
                     btn.textContent = 'OK';
                     btn.className = 'status success';
                     btn.disabled = true;
