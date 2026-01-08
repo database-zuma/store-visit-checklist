@@ -3468,7 +3468,6 @@
 
             users.forEach(user => {
                 const areaLabel = user.area === 'all' ? 'Semua' : (Array.isArray(user.area) ? user.area.map(a => AREA_DATA[a]?.name || a).join(', ') : (AREA_DATA[user.area]?.name || user.area));
-                const isDefault = DEFAULT_USERS.some(d => d.username === user.username);
                 const userEmail = user.email || '-';
 
                 html += `<tr style="border-bottom:1px solid #dee2e6;">
@@ -3478,9 +3477,10 @@
                     <td style="padding:10px;"><span style="background:${user.role === 'admin' ? '#dc3545' : user.role === 'ho' ? '#6f42c1' : user.role === 'bm' ? '#007bff' : '#28a745'};color:white;padding:2px 8px;border-radius:10px;font-size:12px;">${roleLabels[user.role] || user.role}</span></td>
                     <td style="padding:10px;font-size:12px;">${areaLabel}</td>
                     <td style="padding:10px;text-align:center;">
+                        <button onclick="editUser('${user.username}')" style="padding:5px 10px;background:#6c757d;color:white;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Edit User">&#9998;</button>
                         <button onclick="changeUserEmail('${user.username}')" style="padding:5px 10px;background:#17a2b8;color:white;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Email">&#9993;</button>
                         <button onclick="changeUserPassword('${user.username}')" style="padding:5px 10px;background:#ffc107;color:#000;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Password">&#128273;</button>
-                        ${!isDefault ? `<button onclick="deleteUser('${user.username}')" style="padding:5px 10px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;" title="Hapus">&#128465;</button>` : ''}
+                        <button onclick="deleteUser('${user.username}')" style="padding:5px 10px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;" title="Hapus">&#128465;</button>
                     </td>
                 </tr>`;
             });
@@ -3576,6 +3576,43 @@
             localStorage.setItem('visit_users', JSON.stringify(filtered));
 
             alert('User berhasil dihapus!');
+            loadUserListAdmin();
+        }
+
+        function editUser(username) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const userIndex = users.findIndex(u => u.username === username);
+
+            if (userIndex === -1) {
+                alert('User tidak ditemukan!');
+                return;
+            }
+
+            const user = users[userIndex];
+
+            // Prompt for new username
+            const newUsername = prompt('Edit Username (kosongkan jika tidak ingin mengubah):', user.username);
+            if (newUsername === null) return; // cancelled
+
+            // Prompt for new name
+            const newName = prompt('Edit Nama (kosongkan jika tidak ingin mengubah):', user.name);
+            if (newName === null) return; // cancelled
+
+            // Check if new username already exists (if changed)
+            const finalUsername = newUsername.trim().toLowerCase() || user.username;
+            const finalName = newName.trim() || user.name;
+
+            if (finalUsername !== user.username && users.some(u => u.username === finalUsername)) {
+                alert('Username sudah digunakan oleh user lain!');
+                return;
+            }
+
+            // Update user data
+            users[userIndex].username = finalUsername;
+            users[userIndex].name = finalName;
+            localStorage.setItem('visit_users', JSON.stringify(users));
+
+            alert('User berhasil diupdate!');
             loadUserListAdmin();
         }
 
