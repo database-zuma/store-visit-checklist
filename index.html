@@ -1957,6 +1957,25 @@
                     </div>
                 </div>
 
+                <!-- Store Status -->
+                <div class="store-status-section">
+                    <div class="store-status-header">
+                        <h3>&#128205; Status Visit Store - <span id="currentMonth"></span></h3>
+                        <div class="badge" id="storeStatusBadge">0/0 Store</div>
+                    </div>
+                    <!-- Filter for BM -->
+                    <div class="store-status-filters" id="storeStatusFilters" style="display: none;">
+                        <select id="dashFilterArea" onchange="onDashAreaFilterChange()">
+                            <option value="">Semua Area</option>
+                        </select>
+                        <select id="dashFilterAS" onchange="updateDashboard()">
+                            <option value="">Semua AS</option>
+                        </select>
+                    </div>
+                    <div class="store-status-list" id="storeStatusList">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
             </div>
 
             <!-- Welcome Section (for BM/Admin) -->
