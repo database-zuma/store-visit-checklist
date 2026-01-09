@@ -1922,6 +1922,11 @@
 
             <!-- Dashboard Section -->
             <div class="dashboard-section" id="dashboardSection">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                    <button id="refreshDashBtn" onclick="refreshDashboard()" style="padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; display:flex; align-items:center; gap:5px;">
+                        🔄 Refresh
+                    </button>
+                </div>
                 <div class="dashboard-grid">
                     <div class="dash-card primary">
                         <div class="dash-icon">&#128202;</div>
@@ -2736,7 +2741,7 @@
             }
         }
 
-        function initDashboard() {
+        async function initDashboard() {
             const now = new Date();
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             const currentMonthEl = document.getElementById('currentMonth');
@@ -2753,7 +2758,26 @@
                 }
             }
 
+            // Sync from Google Sheets first
+            await syncFromGoogleSheets();
+
             updateDashboard();
+        }
+
+        async function refreshDashboard() {
+            const refreshBtn = document.getElementById('refreshDashBtn');
+            if (refreshBtn) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '⏳ Memuat...';
+            }
+
+            await syncFromGoogleSheets();
+            updateDashboard();
+
+            if (refreshBtn) {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '🔄 Refresh';
+            }
         }
 
         function populateDashFilters() {
