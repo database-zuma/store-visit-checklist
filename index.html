@@ -3356,52 +3356,43 @@
 
                 if (result.success && result.data) {
                     const sheetsData = result.data;
-                    const localArchive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
 
-                    // Merge: add sheets data that's not in local
-                    // Column names from spreadsheet have spaces: "Form No", "Store Name", etc.
+                    // Get list of all formNo from Google Sheets
+                    const sheetsFormNos = sheetsData.map(item => item['Form No']).filter(Boolean);
+
+                    // Build new archive from Google Sheets data
+                    const newArchive = [];
+
                     sheetsData.forEach(sheetItem => {
                         const formNo = sheetItem['Form No'];
                         if (!formNo) return;
 
-                        const exists = localArchive.some(local => local.formNo === formNo);
-                        if (!exists) {
-                            const bmReviewText = sheetItem['BM Riview'] || sheetItem['BM Review'] || '';
-                            localArchive.push({
-                                formNo: formNo,
-                                storeName: sheetItem['Store Name'] || '',
-                                visitDate: sheetItem['Visit Date'] || '',
-                                score: sheetItem['Score'] || 0,
-                                visitorName: sheetItem['Visitor Name'] || '',
-                                areaName: sheetItem['Area Name'] || '',
-                                comment: sheetItem['Comment'] || '',
-                                createdAt: sheetItem['Created At'] || '',
-                                bmReview: bmReviewText ? {
-                                    comment: bmReviewText,
-                                    reviewedAt: sheetItem['BM Riview Date'] || sheetItem['BM Review Date'] || ''
-                                } : null,
-                                pdfLink: sheetItem['PDFLink'] || '',
-                                answers: {},
-                                fromSheets: true
-                            });
-                        } else {
-                            // Update BM Review if exists in sheets
-                            const localIdx = localArchive.findIndex(local => local.formNo === formNo);
-                            const bmReviewText = sheetItem['BM Riview'] || sheetItem['BM Review'] || '';
-                            if (localIdx !== -1 && bmReviewText && !localArchive[localIdx].bmReview) {
-                                localArchive[localIdx].bmReview = {
-                                    comment: bmReviewText,
-                                    reviewedAt: sheetItem['BM Riview Date'] || sheetItem['BM Review Date'] || ''
-                                };
-                            }
-                        }
+                        const bmReviewText = sheetItem['BM Riview'] || sheetItem['BM Review'] || '';
+                        newArchive.push({
+                            formNo: formNo,
+                            storeName: sheetItem['Store Name'] || '',
+                            visitDate: sheetItem['Visit Date'] || '',
+                            score: sheetItem['Score'] || 0,
+                            visitorName: sheetItem['Visitor Name'] || '',
+                            areaName: sheetItem['Area Name'] || '',
+                            comment: sheetItem['Comment'] || '',
+                            createdAt: sheetItem['Created At'] || '',
+                            bmReview: bmReviewText ? {
+                                comment: bmReviewText,
+                                reviewedAt: sheetItem['BM Riview Date'] || sheetItem['BM Review Date'] || ''
+                            } : null,
+                            pdfLink: sheetItem['PDFLink'] || '',
+                            answers: {},
+                            fromSheets: true
+                        });
                     });
 
                     // Sort by date descending
-                    localArchive.sort((a, b) => new Date(b.createdAt || b.visitDate) - new Date(a.createdAt || a.visitDate));
+                    newArchive.sort((a, b) => new Date(b.createdAt || b.visitDate) - new Date(a.createdAt || a.visitDate));
 
-                    localStorage.setItem('visit_archive', JSON.stringify(localArchive));
-                    console.log('Synced ' + sheetsData.length + ' records from Google Sheets');
+                    // Replace localStorage with fresh data from Google Sheets
+                    localStorage.setItem('visit_archive', JSON.stringify(newArchive));
+                    console.log('Synced ' + sheetsData.length + ' records from Google Sheets (full refresh)');
                 }
             } catch (e) {
                 console.log('Sync error:', e);
