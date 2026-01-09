@@ -4314,29 +4314,35 @@
 
             // Get BM email for notification
             const bmEmail = getBMEmailForStore(storeName);
+            console.log('BM Email for notification:', bmEmail);
 
             // Save to Google Sheets with PDF and send notification
             try {
-                fetch(GOOGLE_SHEETS_API, {
+                const savePayload = {
+                    action: 'save',
+                    formNo,
+                    storeName,
+                    visitDate,
+                    score,
+                    visitorName,
+                    areaName,
+                    comment,
+                    createdAt,
+                    pdfBase64,
+                    // Email notification data (AS submit -> notify BM)
+                    sendNotification: bmEmail ? true : false,
+                    notificationType: 'visit',
+                    notifyEmail: bmEmail || ''
+                };
+                console.log('Sending to Google Sheets with notification:', savePayload.sendNotification, savePayload.notifyEmail);
+
+                const response = await fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'save',
-                        formNo,
-                        storeName,
-                        visitDate,
-                        score,
-                        visitorName,
-                        areaName,
-                        comment,
-                        createdAt,
-                        pdfBase64,
-                        // Email notification data (AS submit -> notify BM)
-                        sendNotification: bmEmail ? true : false,
-                        notificationType: 'visit',
-                        notifyEmail: bmEmail || ''
-                    })
+                    body: JSON.stringify(savePayload)
                 });
+                const result = await response.json();
+                console.log('Google Sheets response:', result);
             } catch (e) {
                 console.log('Google Sheets sync error:', e);
             }
