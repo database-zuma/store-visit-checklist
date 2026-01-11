@@ -2053,8 +2053,8 @@
                             <tr>
                                 <th>Store</th>
                                 <th>Area</th>
-                                <th>Jumlah Visit</th>
                                 <th>Status</th>
+                                <th>Jumlah Visit</th>
                             </tr>
                         </thead>
                         <tbody id="asStoreTableBody">
@@ -3253,10 +3253,10 @@
                 };
             });
 
-            // Sort: pending first, then by store name
+            // Sort: visited first, then by store name
             storeData.sort((a, b) => {
                 if (a.status !== b.status) {
-                    return a.status === 'pending' ? -1 : 1;
+                    return a.status === 'visited' ? -1 : 1;
                 }
                 return a.store.localeCompare(b.store);
             });
@@ -3282,8 +3282,8 @@
                 return `<tr>
                     <td><strong>${s.store}</strong></td>
                     <td>${s.area}</td>
-                    <td style="text-align:center;"><span class="visit-count-badge">${visitText}</span></td>
                     <td><span class="score-badge ${statusClass}">${statusLabel}</span></td>
+                    <td style="text-align:center;"><span class="visit-count-badge">${visitText}</span></td>
                 </tr>`;
             }).join('');
         }
