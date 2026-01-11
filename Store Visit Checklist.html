@@ -4567,7 +4567,7 @@
                         // Email notification data (BM review -> notify AS)
                         sendNotification: asEmail ? true : false,
                         notificationType: 'review',
-                        notifyEmail: asEmail || '',
+                        notifyEmails: asEmail ? [asEmail] : [],
                         storeName: storeName,
                         visitorName: visitorName
                     })
@@ -4678,9 +4678,9 @@
                     // Email notification data (AS submit -> notify BM)
                     sendNotification: bmEmail ? true : false,
                     notificationType: 'visit',
-                    notifyEmail: bmEmail || ''
+                    notifyEmails: bmEmail ? [bmEmail] : []
                 };
-                console.log('Sending to Google Sheets with notification:', savePayload.sendNotification, savePayload.notifyEmail);
+                console.log('Sending to Google Sheets with notification:', savePayload.sendNotification, savePayload.notifyEmails);
 
                 const response = await fetch(GOOGLE_SHEETS_API, {
                     method: 'POST',
