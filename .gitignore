@@ -3,6 +3,9 @@
 *.jpg
 *.jpeg
 
+# Exception for logo
+!assets/logo.png
+
 # Excel files
 *.xlsx
 *.xls
