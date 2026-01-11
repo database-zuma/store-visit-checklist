@@ -4292,15 +4292,15 @@
             if (startBtn) startBtn.style.display = 'none';
             if (selectModeControls) selectModeControls.style.display = 'flex';
 
-            // Show all checkboxes and check them all
+            // Show all checkboxes (unchecked - user selects manually)
             const checkboxes = document.querySelectorAll('.archive-checkbox');
             checkboxes.forEach(cb => {
                 cb.style.display = 'block';
-                cb.checked = true;
+                cb.checked = false;
             });
 
-            // Check select all
-            if (selectAllCheckbox) selectAllCheckbox.checked = true;
+            // Uncheck select all
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
 
             updateSelectedCount();
         }
