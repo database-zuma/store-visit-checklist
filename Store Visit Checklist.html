@@ -2450,6 +2450,20 @@
                     </select>
                 </div>
 
+                <!-- Bulk Delete Controls (Admin & BM only) -->
+                <div class="bulk-delete-controls" id="bulkDeleteControls" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:15px; padding:10px 15px; background:linear-gradient(135deg,#f8f9fa,#e9ecef); border-radius:8px; margin-bottom:15px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500;">
+                            <input type="checkbox" id="selectAllArchive" onchange="toggleSelectAll()" style="width:18px; height:18px; cursor:pointer;">
+                            Pilih Semua
+                        </label>
+                        <span id="selectedCount" style="color:#666; font-size:13px;">(0 dipilih)</span>
+                        <button id="bulkDeleteBtn" onclick="bulkDeleteArchive()" style="margin-left:auto; padding:8px 16px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; display:none;">
+                            &#128465; Hapus Terpilih
+                        </button>
+                    </div>
+                </div>
+
                 <div class="archive-list" id="archiveList"></div>
             </div>
         </div>
@@ -4157,13 +4171,25 @@
 
         function displayArchive(archive) {
             const list = document.getElementById('archiveList');
+            const bulkDeleteControls = document.getElementById('bulkDeleteControls');
+            const canDelete = currentUser.role === 'admin' || currentUser.role === 'bm';
+
+            // Show/hide bulk delete controls
+            if (bulkDeleteControls) {
+                bulkDeleteControls.style.display = canDelete && archive.length > 0 ? 'block' : 'none';
+            }
+
+            // Reset select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAllArchive');
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateSelectedCount();
+
             if (archive.length === 0) {
                 list.innerHTML = '<p style="text-align:center;color:#666;padding:40px;">Belum ada arsip visit</p>';
                 return;
             }
             const showScore = currentUser.role !== 'as';
             const canClick = currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'as' || currentUser.role === 'ho';
-            const canDelete = currentUser.role === 'admin' || currentUser.role === 'bm';
             list.innerHTML = archive.map((item, idx) => {
                 const hasProof = item.visitProof && item.visitProof.photo;
                 const hasGPS = item.visitProof && item.visitProof.location;
@@ -4171,14 +4197,14 @@
                 const area = getAreaForStore(item.storeName);
                 const areaName = area ? area.name : '';
                 return `
-                <div class="archive-item" style="cursor:pointer;">
-                    <div class="archive-item-info" ${canClick ? `onclick="openArchiveDetail('${item.formNo}')"` : ''}>
+                <div class="archive-item" style="cursor:pointer; ${canDelete ? 'display:flex; align-items:center;' : ''}">
+                    ${canDelete ? `<input type="checkbox" class="archive-checkbox" data-formno="${item.formNo}" onchange="updateSelectedCount()" onclick="event.stopPropagation()" style="width:18px; height:18px; margin-right:12px; cursor:pointer; flex-shrink:0;">` : ''}
+                    <div class="archive-item-info" style="flex:1;" ${canClick ? `onclick="openArchiveDetail('${item.formNo}')"` : ''}>
                         <h4>${item.storeName} ${hasProof ? '<span title="Foto bukti visit" style="color:#28a745;">&#128247;</span>' : ''} ${hasGPS ? '<span title="GPS tersedia" style="color:#28a745;">&#128205;</span>' : ''} ${hasBmReview ? '<span title="Review dari BM" style="color:#ffc107;">&#128172;</span>' : ''}</h4>
                         <p><span style="background:#e9ecef;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-right:5px;">${areaName}</span>${item.formNo} | ${new Date(item.visitDate).toLocaleDateString('id-ID')} | AS: ${item.visitorName}</p>
                     </div>
                     <div class="archive-item-actions">
                         ${showScore ? `<div class="archive-item-score ${item.score >= 80 ? 'good' : item.score >= 60 ? 'average' : 'poor'}">${item.score}</div>` : ''}
-                        ${canDelete ? `<button class="btn-delete-archive" onclick="event.stopPropagation(); deleteArchiveItem('${item.formNo}')" title="Hapus">&#128465;</button>` : ''}
                     </div>
                 </div>
             `}).join('');
@@ -4222,6 +4248,80 @@
             }
 
             alert('Arsip visit berhasil dihapus');
+        }
+
+        // ========================================
+        // BULK DELETE FUNCTIONS
+        // ========================================
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllArchive');
+            const checkboxes = document.querySelectorAll('.archive-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.archive-checkbox:checked');
+            const countEl = document.getElementById('selectedCount');
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            const count = checkboxes.length;
+
+            if (countEl) countEl.textContent = `(${count} dipilih)`;
+            if (bulkDeleteBtn) bulkDeleteBtn.style.display = count > 0 ? 'block' : 'none';
+        }
+
+        async function bulkDeleteArchive() {
+            const checkboxes = document.querySelectorAll('.archive-checkbox:checked');
+            const formNos = Array.from(checkboxes).map(cb => cb.dataset.formno);
+
+            if (formNos.length === 0) {
+                alert('Pilih minimal 1 arsip untuk dihapus');
+                return;
+            }
+
+            if (!confirm(`Apakah Anda yakin ingin menghapus ${formNos.length} arsip visit?`)) return;
+
+            // Show loading
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            const originalText = bulkDeleteBtn.innerHTML;
+            bulkDeleteBtn.innerHTML = '⏳ Menghapus...';
+            bulkDeleteBtn.disabled = true;
+
+            let archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+
+            // Remove items from localStorage
+            archive = archive.filter(a => !formNos.includes(a.formNo));
+            localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Delete from Google Sheets (one by one)
+            for (const formNo of formNos) {
+                try {
+                    await fetch(GOOGLE_SHEETS_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            formNo: formNo
+                        })
+                    });
+                } catch (e) {
+                    console.log('Google Sheets delete error for ' + formNo + ':', e);
+                }
+            }
+
+            // Reset button
+            bulkDeleteBtn.innerHTML = originalText;
+            bulkDeleteBtn.disabled = false;
+
+            // Refresh archive list
+            filterArchive();
+
+            // Update dashboard if needed
+            if (typeof updateDashboard === 'function') {
+                updateDashboard();
+            }
+
+            alert(`${formNos.length} arsip visit berhasil dihapus`);
         }
 
         // ========================================
