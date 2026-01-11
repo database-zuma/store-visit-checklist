@@ -1925,7 +1925,7 @@
             </div>
 
             <!-- Dashboard Section -->
-            <div class="dashboard-section" id="dashboardSection">
+            <div class="dashboard-section form-section-hide" id="dashboardSection">
                 <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
                     <button id="refreshDashBtn" onclick="refreshDashboard()" style="padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; display:flex; align-items:center; gap:5px;">
                         🔄 Refresh
@@ -2699,27 +2699,20 @@
         async function initApp() {
             initUserDisplay();
 
-            // Wait for dashboard to sync data first (fixes delay issue)
-            await initDashboard();
-
             // Check special access flags
             const userArea = currentUser.area;
             const areaData = typeof userArea === 'string' ? AREA_DATA[userArea] : null;
             const asHasBmAccess = areaData && areaData.asHasBmAccess && currentUser.role === 'as';
             const bmHasAsAccess = areaData && areaData.bmHasAsAccess && currentUser.role === 'bm';
 
-            // BM, Admin, HO, dan AS dengan akses BM (Sulawesi) hanya bisa melihat
+            // Set UI layout FIRST (before any async operations) to prevent flash of wrong layout
             if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho' || asHasBmAccess) {
-                // BM dengan akses AS (Sumatera, Batam) tetap bisa input checklist
                 if (bmHasAsAccess) {
-                    initStoreDropdown();
-                    initChecklists();
-                    hideScoreForAS();
-                    document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+                    // BM dengan akses AS (Sumatera, Batam) - show AS form
                     document.getElementById('bmWelcome').style.display = 'none';
-                    // BM dengan akses AS juga bisa lihat AS dashboard
-                    initASDashboard();
+                    document.getElementById('dashboardSection').style.display = 'block';
                 } else {
+                    // BM, Admin, HO, AS dengan akses BM - show BM view
                     document.querySelector('.container').classList.add('bm-view');
                     document.getElementById('bmWelcome').style.display = 'block';
 
@@ -2737,7 +2730,25 @@
                         document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
                         document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
                     }
+                }
+            } else {
+                // Regular AS user - show AS form
+                document.getElementById('dashboardSection').style.display = 'block';
+            }
 
+            // Now sync data from Google Sheets
+            await initDashboard();
+
+            // Initialize role-specific features after data is loaded
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho' || asHasBmAccess) {
+                if (bmHasAsAccess) {
+                    // BM dengan akses AS (Sumatera, Batam) tetap bisa input checklist
+                    initStoreDropdown();
+                    initChecklists();
+                    hideScoreForAS();
+                    document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+                    initASDashboard();
+                } else {
                     // Initialize chart dashboard for BM/HO/Admin (data already synced)
                     initChartDashboard();
                 }
@@ -2747,8 +2758,6 @@
                 initChecklists();
                 hideScoreForAS();
                 document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
-
-                // Initialize AS Dashboard (visit count only)
                 initASDashboard();
             }
         }
