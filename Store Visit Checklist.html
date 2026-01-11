@@ -6,6 +6,7 @@
     <title>Store Visit Checklist - Area Supervisor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -938,6 +939,243 @@
             transform: translateY(-2px);
         }
 
+        .bm-welcome-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .bm-welcome .btn-view-rules {
+            padding: 15px 40px;
+            background: #16213e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .bm-welcome .btn-view-rules:hover {
+            background: #0f3460;
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard Charts */
+        .dashboard-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .dashboard-header h3 {
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-filter select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .dashboard-filter select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .chart-container canvas {
+            max-height: 300px;
+        }
+
+        .store-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .store-score-table th,
+        .store-score-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .store-score-table th {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .store-score-table td {
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+        }
+
+        .store-score-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .score-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .score-badge.good { background: #28a745; color: white; }
+        .score-badge.average { background: #ffc107; color: #000; }
+        .score-badge.poor { background: #dc3545; color: white; }
+        .score-badge.none { background: #6c757d; color: white; }
+
+        .visit-count-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        /* Rules Modal */
+        .rules-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .rules-modal.show {
+            display: flex;
+        }
+
+        .rules-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .rules-header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rules-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .rules-body {
+            padding: 25px;
+        }
+
+        .rules-section {
+            margin-bottom: 25px;
+        }
+
+        .rules-section h3 {
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 5px;
+        }
+
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .rules-table th, .rules-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .rules-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .rules-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .rules-formula {
+            background: #1a1a2e;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .rules-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .score-badge.good { background: #d4edda; color: #155724; }
+        .score-badge.average { background: #fff3cd; color: #856404; }
+        .score-badge.poor { background: #f8d7da; color: #721c24; }
+
         /* Archive Detail Modal */
         .archive-detail-modal {
             display: none;
@@ -1684,6 +1922,11 @@
 
             <!-- Dashboard Section -->
             <div class="dashboard-section" id="dashboardSection">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                    <button id="refreshDashBtn" onclick="refreshDashboard()" style="padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-size:14px; display:flex; align-items:center; gap:5px;">
+                        🔄 Refresh
+                    </button>
+                </div>
                 <div class="dashboard-grid">
                     <div class="dash-card primary">
                         <div class="dash-icon">&#128202;</div>
@@ -1701,7 +1944,8 @@
                             </svg>
                             <div>
                                 <div class="dash-number" id="dashProgress">0%</div>
-                                <div class="dash-label">Progress</div>
+                                <div class="dash-label">Coverage</div>
+                                <div class="dash-sub" id="dashCoverageSub">0/0 Store</div>
                             </div>
                         </div>
                     </div>
@@ -1718,33 +1962,105 @@
                         <div class="dash-sub">bulan ini</div>
                     </div>
                 </div>
-
-                <!-- Store Status -->
-                <div class="store-status-section">
-                    <div class="store-status-header">
-                        <h3>&#128205; Status Visit Store - <span id="currentMonth"></span></h3>
-                        <div class="badge" id="storeStatusBadge">0/0 Store</div>
-                    </div>
-                    <!-- Filter for BM -->
-                    <div class="store-status-filters" id="storeStatusFilters" style="display: none;">
-                        <select id="dashFilterArea" onchange="onDashAreaFilterChange()">
-                            <option value="">Semua Area</option>
-                        </select>
-                        <select id="dashFilterAS" onchange="updateDashboard()">
-                            <option value="">Semua AS</option>
-                        </select>
-                    </div>
-                    <div class="store-status-list" id="storeStatusList">
-                        <!-- Will be populated by JS -->
-                    </div>
-                </div>
             </div>
 
             <!-- Welcome Section (for BM/Admin) -->
             <div class="bm-welcome" id="bmWelcome" style="display: none;">
                 <h2 id="welcomeTitle">&#128188; Selamat Datang!</h2>
                 <p id="welcomeDesc">Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.</p>
-                <button class="btn-view-archive" onclick="openArchive()">&#128203; Lihat Arsip Visit</button>
+                <div class="bm-welcome-buttons">
+                    <button class="btn-view-archive" onclick="openArchive()">&#128203; Lihat Arsip Visit</button>
+                    <button class="btn-view-rules" onclick="openRules()">&#128220; Lihat Rules Penilaian</button>
+                </div>
+
+                <!-- Dashboard Charts Section -->
+                <div class="dashboard-section" id="dashboardChartSection">
+                    <div class="dashboard-header">
+                        <h3>&#128202; Dashboard Score per Store</h3>
+                        <div class="dashboard-filter">
+                            <select id="chartMonthFilter" onchange="updateChartDashboard()">
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                            <select id="chartYearFilter" onchange="updateChartDashboard()">
+                                <!-- Will be populated by JS -->
+                            </select>
+                            <select id="chartAreaFilter" onchange="updateChartDashboard()">
+                                <option value="">Semua Area</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="storeScoreChart"></canvas>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="store-score-table" id="storeScoreTable">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Area</th>
+                                    <th>Score</th>
+                                    <th>Kategori</th>
+                                    <th>Jumlah Visit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="storeScoreTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AS Dashboard Section (Visit Count Only) -->
+            <div class="as-dashboard" id="asDashboard" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 15px;">
+                    <h3>&#128202; Status Visit Store</h3>
+                    <div class="dashboard-filter">
+                        <select id="asChartMonthFilter" onchange="updateASDashboard()">
+                            <option value="1">Januari</option>
+                            <option value="2">Februari</option>
+                            <option value="3">Maret</option>
+                            <option value="4">April</option>
+                            <option value="5">Mei</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">Agustus</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Desember</option>
+                        </select>
+                        <select id="asChartYearFilter" onchange="updateASDashboard()">
+                        </select>
+                        <button onclick="refreshASDashboard()" style="padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-size:13px;">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="store-score-table" id="asStoreTable">
+                        <thead>
+                            <tr>
+                                <th>Store</th>
+                                <th>Area</th>
+                                <th>Jumlah Visit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asStoreTableBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Progress Checklist -->
@@ -1915,6 +2231,9 @@
                 <button class="btn-secondary" onclick="openArchive()">
                     &#128194; Lihat Arsip
                 </button>
+                <button class="btn-primary" onclick="saveVisit()">
+                    &#128190; Simpan Visit
+                </button>
             </div>
         </div>
     </div>
@@ -1928,6 +2247,149 @@
             </div>
             <div class="archive-detail-body" id="archiveDetailBody">
                 <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div class="rules-modal" id="rulesModal">
+        <div class="rules-content">
+            <div class="rules-header">
+                <h2>&#128220; Rules Penilaian Visit</h2>
+                <button class="modal-close" onclick="closeRules()">&times;</button>
+            </div>
+            <div class="rules-body">
+                <div class="rules-section">
+                    <h3>&#127919; Sistem Penilaian</h3>
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>Jawaban</th>
+                                <th>Keterangan</th>
+                                <th>Dihitung?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong style="color:#28a745;">YES</strong></td>
+                                <td>Item sesuai standar</td>
+                                <td>&#9989; Ya (sebagai benar)</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color:#dc3545;">NO</strong></td>
+                                <td>Item tidak sesuai standar</td>
+                                <td>&#9989; Ya (sebagai salah)</td>
+                            </tr>
+                            <tr>
+                                <td><strong style="color:#6c757d;">N/A</strong></td>
+                                <td>Item tidak berlaku untuk store ini</td>
+                                <td>&#10060; Tidak dihitung</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="rules-section">
+                    <h3>&#128202; Rumus Perhitungan Score</h3>
+                    <div class="rules-formula">
+                        Score = (Jumlah YES &divide; (Jumlah YES + Jumlah NO)) &times; 100
+                    </div>
+                    <p><strong>Contoh:</strong> YES = 35, NO = 5, N/A = 2</p>
+                    <div class="rules-formula">
+                        Score = (35 &divide; 40) &times; 100 = <strong>87.5 ≈ 88</strong>
+                    </div>
+                    <div class="rules-note">
+                        <strong>&#128161; Catatan:</strong> N/A tidak mempengaruhi score sama sekali. Hanya YES dan NO yang masuk perhitungan.
+                    </div>
+                </div>
+
+                <div class="rules-section">
+                    <h3>&#127942; Kategori Score</h3>
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>Range Score</th>
+                                <th>Kategori</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>80 - 100</strong></td>
+                                <td><span class="score-badge good">Good</span></td>
+                                <td>&#128994; Sangat Baik</td>
+                            </tr>
+                            <tr>
+                                <td><strong>60 - 79</strong></td>
+                                <td><span class="score-badge average">Average</span></td>
+                                <td>&#128993; Cukup</td>
+                            </tr>
+                            <tr>
+                                <td><strong>&lt; 60</strong></td>
+                                <td><span class="score-badge poor">Poor</span></td>
+                                <td>&#128308; Perlu Perbaikan</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="rules-section">
+                    <h3>&#128203; Total Item Checklist</h3>
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>Kategori</th>
+                                <th>Jumlah Item</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Store Ambiance</td><td>10 item</td></tr>
+                            <tr><td>Display</td><td>8 item</td></tr>
+                            <tr><td>Store Administrasi</td><td>8 item</td></tr>
+                            <tr><td>Store Cleaning</td><td>7 item</td></tr>
+                            <tr><td>SPG</td><td>7 item</td></tr>
+                            <tr><td>Stock</td><td>2 item</td></tr>
+                            <tr style="background:#1a1a2e;color:white;"><td><strong>TOTAL</strong></td><td><strong>42 item</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal" id="adminPanelModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>&#128736; Admin Panel - Kelola User</h2>
+                <button class="modal-close" onclick="closeAdminPanel()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Add User Form -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">&#10133; Tambah User Baru</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <input type="text" id="newUsername" placeholder="Username" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="password" id="newPassword" placeholder="Password" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="text" id="newName" placeholder="Nama Lengkap" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="email" id="newEmail" placeholder="Email (untuk notifikasi)" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <select id="newRole" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">-- Pilih Role --</option>
+                            <option value="ho">Head Office</option>
+                            <option value="bm">Branch Manager</option>
+                            <option value="as">Area Supervisor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <select id="newArea" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="all">Semua Area</option>
+                        </select>
+                        <button onclick="addNewUser()" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Tambah</button>
+                    </div>
+                </div>
+
+                <!-- User List -->
+                <h3>&#128101; Daftar User</h3>
+                <div id="userListAdmin" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
@@ -1971,6 +2433,9 @@
                     <select id="filterArea" onchange="onAreaFilterChange()">
                         <option value="">Semua Area</option>
                     </select>
+                    <select id="filterBM" onchange="onBMFilterChange()" style="display: none;">
+                        <option value="">Semua BM</option>
+                    </select>
                     <select id="filterAS" onchange="onASFilterChange()" style="display: none;">
                         <option value="">Semua AS</option>
                     </select>
@@ -1994,33 +2459,55 @@
         // ========================================
         // DATA CONFIGURATION
         // ========================================
+        const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbzbbVegL1sawaovzSliep1F9kmyenjDVq-hzuIgMMcz0ygzhFZIvGlJLxGHWxZdSF6Vmw/exec';
+
         const AREA_DATA = {
-            'bali1': { name: 'Bali 1', bm: 'Tomi', as: 'Wempy', stores: ['Bajera', 'Level 21', 'Lippo Bali', 'Jembrana', 'Ubud', 'Tabanan', 'Batubulan', 'Tanah Lot', 'Kapal'] },
-            'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Budiono', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Karangasem', 'Klungkung', 'Peguyangan', 'Pemogan', 'Monang Maning', 'Bangli', 'Lebah Peliatan'] },
-            'bali3': { name: 'Bali 3', bm: 'Tomi', as: 'Manda', stores: ['MBG', 'Kedonganan', 'Kesiman', 'Peliatan', 'Penatih', 'Panjer', 'Seririt', 'Singaraja', 'Uluwatu'] },
-            'jatim': { name: 'Jawa Timur', bm: 'Kusdiyan', as: 'Ninik', stores: ['Lippo SDA', 'PTC', 'Galaxy', 'Matos', 'Lippo Batu', 'Tunjungan Plaza', 'Royal', 'Icon Mall Gresik', 'City of Tomorrow', 'Sunrise Mall Mojokerto', 'Mall Olympic Garden'] },
-            'lombok': { name: 'Lombok', bm: 'Ariel', as: 'Laras', stores: ['Mataram', 'Epicentrum'] },
+            'bali1': { name: 'Bali 1', bm: 'Tomi', bmEmail: 'database@zuma.id', as: 'Wempy', asEmail: 'ilmiahwanwafiputra@gmail.com', stores: ['Bajera', 'Level 21', 'Jembrana', 'Penatih', 'Peguyangan', 'Tabanan', 'Monang Maning', 'Batubulan', 'Kapal'] },
+            'bali2': { name: 'Bali 2', bm: 'Tomi', as: 'Erlang', stores: ['Living World', 'Icon Mall Bali', 'Dalung', 'Gianyar', 'Klungkung', 'Lippo Bali', 'Pemogan', 'Bangli', 'Karangasem'] },
+            'bali3': { name: 'Bali 3', bm: 'Tomi', as: 'Manda', stores: ['MBG', 'Kedonganan', 'Kesiman', 'Ubud', 'Peliatan', 'Panjer', 'Seririt', 'Singaraja', 'Lebah Peliatan', 'Uluwatu'] },
+            'jatim': { name: 'Jawa Timur', bm: 'Kusdiyan', as: 'Ninik', stores: ['Lippo SDA', 'PTC', 'Galaxy', 'Matos', 'Lippo Batu', 'Tunjungan Plaza', 'Royal', 'Icon Mall Gresik', 'CITO', 'Sunrise Mall Mojokerto', 'MOG'] },
+            'lombok': { name: 'Lombok', bm: 'Ariel', as: 'Lara Sati', stores: ['Mataram', 'Epicentrum'] },
             'jakarta': { name: 'Jakarta', bm: 'Christine', as: 'Irfa', stores: ['Pluit Village', 'MOI', 'LMP', 'Bintaro Xchange'] },
-            'sulawesi': { name: 'Sulawesi', bm: null, as: 'Dian', stores: ['Mega Mall'] },
-            'sumatera': { name: 'Sumatera', bm: 'Arvina', as: null, stores: ['Ska Mall', 'Nagoya Hills'] }
+            'sulawesi': { name: 'Sulawesi', bm: null, as: 'Dian', stores: ['Mega Mall'], asHasBmAccess: true },
+            'sumatera': { name: 'Sumatera', bm: 'Yusuf', as: null, stores: ['Ska Mall'], bmHasAsAccess: true },
+            'batam': { name: 'Batam', bm: 'Arvina', as: null, stores: ['Nagoya Hills'], bmHasAsAccess: true }
         };
 
         // Target: 1 visit per store per month
         const VISIT_TARGET_PER_STORE = 1;
 
-        const DEFAULT_USERS = [{ username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all' }];
+        const DEFAULT_USERS = [
+            { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator', area: 'all', email: 'admin@zuma.id' },
+            { username: 'ho', password: 'ho123', role: 'ho', name: 'Head Office', area: 'all', email: 'ho@zuma.id' }
+        ];
 
-        // Generate users
+        // Generate users from AREA_DATA
         for (const [areaId, area] of Object.entries(AREA_DATA)) {
             if (area.as) {
-                DEFAULT_USERS.push({ username: area.as.toLowerCase().replace(/\s+/g, ''), password: 'as123', role: 'as', name: area.as, area: areaId });
+                DEFAULT_USERS.push({
+                    username: area.as.toLowerCase().replace(/\s+/g, ''),
+                    password: 'as123',
+                    role: 'as',
+                    name: area.as,
+                    area: areaId,
+                    email: area.asEmail || ''
+                });
             }
         }
         const bmAdded = new Set();
         for (const [areaId, area] of Object.entries(AREA_DATA)) {
             if (area.bm && !bmAdded.has(area.bm)) {
                 const bmAreas = Object.entries(AREA_DATA).filter(([id, a]) => a.bm === area.bm).map(([id]) => id);
-                DEFAULT_USERS.push({ username: area.bm.toLowerCase().replace(/\s+/g, ''), password: 'bm123', role: 'bm', name: area.bm, area: bmAreas });
+                // Get email from first area with this BM
+                const bmEmail = Object.values(AREA_DATA).find(a => a.bm === area.bm)?.bmEmail || '';
+                DEFAULT_USERS.push({
+                    username: area.bm.toLowerCase().replace(/\s+/g, ''),
+                    password: 'bm123',
+                    role: 'bm',
+                    name: area.bm,
+                    area: bmAreas,
+                    email: bmEmail
+                });
                 bmAdded.add(area.bm);
             }
         }
@@ -2106,9 +2593,29 @@
         });
 
         function initUsers() {
-            let users = JSON.parse(localStorage.getItem('visit_users') || 'null');
-            if (!users) {
-                localStorage.setItem('visit_users', JSON.stringify(DEFAULT_USERS));
+            let users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+
+            // Selalu pastikan DEFAULT_USERS ada di localStorage dan password ter-update
+            let updated = false;
+            DEFAULT_USERS.forEach(defaultUser => {
+                const existingIdx = users.findIndex(u => u.username.toLowerCase() === defaultUser.username.toLowerCase());
+                if (existingIdx === -1) {
+                    // User belum ada, tambahkan
+                    users.push(defaultUser);
+                    updated = true;
+                } else {
+                    // User sudah ada, update password dan data lainnya dari default
+                    users[existingIdx].password = defaultUser.password;
+                    users[existingIdx].role = defaultUser.role;
+                    users[existingIdx].name = defaultUser.name;
+                    users[existingIdx].area = defaultUser.area;
+                    if (defaultUser.email) users[existingIdx].email = defaultUser.email;
+                    updated = true;
+                }
+            });
+
+            if (updated || users.length === 0) {
+                localStorage.setItem('visit_users', JSON.stringify(users));
             }
         }
 
@@ -2161,28 +2668,60 @@
             }
         }
 
-        function initApp() {
+        async function initApp() {
             initUserDisplay();
-            initDashboard();
 
-            // BM dan Admin hanya bisa melihat, tidak bisa input checklist
-            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
-                document.querySelector('.container').classList.add('bm-view');
-                document.getElementById('bmWelcome').style.display = 'block';
+            // Wait for dashboard to sync data first (fixes delay issue)
+            await initDashboard();
 
-                // Set welcome message based on role
-                if (currentUser.role === 'admin') {
-                    document.getElementById('welcomeTitle').innerHTML = '&#128736; Selamat Datang, Administrator!';
-                    document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.';
+            // Check special access flags
+            const userArea = currentUser.area;
+            const areaData = typeof userArea === 'string' ? AREA_DATA[userArea] : null;
+            const asHasBmAccess = areaData && areaData.asHasBmAccess && currentUser.role === 'as';
+            const bmHasAsAccess = areaData && areaData.bmHasAsAccess && currentUser.role === 'bm';
+
+            // BM, Admin, HO, dan AS dengan akses BM (Sulawesi) hanya bisa melihat
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho' || asHasBmAccess) {
+                // BM dengan akses AS (Sumatera, Batam) tetap bisa input checklist
+                if (bmHasAsAccess) {
+                    initStoreDropdown();
+                    initChecklists();
+                    hideScoreForAS();
+                    document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('bmWelcome').style.display = 'none';
+                    // BM dengan akses AS juga bisa lihat AS dashboard
+                    initASDashboard();
                 } else {
-                    document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
-                    document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
+                    document.querySelector('.container').classList.add('bm-view');
+                    document.getElementById('bmWelcome').style.display = 'block';
+
+                    // Set welcome message based on role
+                    if (currentUser.role === 'admin') {
+                        document.getElementById('welcomeTitle').innerHTML = '&#128736; Selamat Datang, Administrator!';
+                        document.getElementById('welcomeDesc').innerHTML = 'Anda dapat melihat semua arsip visit, memberikan review, dan mengelola data.<br><button onclick="openAdminPanel()" style="margin-top:10px;padding:8px 15px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;">&#128736; Kelola User</button>';
+                    } else if (currentUser.role === 'ho') {
+                        document.getElementById('welcomeTitle').innerHTML = '&#127970; Selamat Datang, Head Office!';
+                        document.getElementById('welcomeDesc').textContent = 'Anda dapat memonitor semua visit dari seluruh area Indonesia.';
+                    } else if (asHasBmAccess) {
+                        document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, ' + currentUser.name + '!';
+                        document.getElementById('welcomeDesc').textContent = 'Sebagai AS Sulawesi (tanpa BM), Anda dapat memonitor dan memberikan review visit.';
+                    } else {
+                        document.getElementById('welcomeTitle').innerHTML = '&#128188; Selamat Datang, Branch Manager!';
+                        document.getElementById('welcomeDesc').textContent = 'Anda dapat melihat progress visit dari Area Supervisor dan memberikan review/feedback.';
+                    }
+
+                    // Initialize chart dashboard for BM/HO/Admin (data already synced)
+                    initChartDashboard();
                 }
             } else {
+                // Regular AS user
                 initStoreDropdown();
                 initChecklists();
                 hideScoreForAS();
                 document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+
+                // Initialize AS Dashboard (visit count only)
+                initASDashboard();
             }
         }
 
@@ -2205,14 +2744,14 @@
         function initUserDisplay() {
             document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
             document.getElementById('userName').textContent = currentUser.name;
-            const roleNames = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor' };
+            const roleNames = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor', 'ho': 'Head Office' };
             document.getElementById('userRole').textContent = roleNames[currentUser.role] || currentUser.role;
             document.getElementById('visitorName').value = currentUser.name;
         }
 
         function getUserStores() {
             let stores = [];
-            if (currentUser.role === 'admin') {
+            if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                 for (const area of Object.values(AREA_DATA)) {
                     area.stores.forEach(store => stores.push({ store, area: area.name }));
                 }
@@ -2252,30 +2791,53 @@
             }
         }
 
-        function initDashboard() {
+        async function initDashboard() {
             const now = new Date();
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            document.getElementById('currentMonth').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+            const currentMonthEl = document.getElementById('currentMonth');
+            if (currentMonthEl) currentMonthEl.textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
 
-            // Show filters for BM
+            // Show filters for BM, Admin, HO (if element exists)
             const filtersDiv = document.getElementById('storeStatusFilters');
-            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
-                filtersDiv.style.display = 'flex';
-                populateDashFilters();
-            } else {
-                filtersDiv.style.display = 'none';
+            if (filtersDiv) {
+                if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
+                    filtersDiv.style.display = 'flex';
+                    populateDashFilters();
+                } else {
+                    filtersDiv.style.display = 'none';
+                }
             }
 
+            // Sync from Google Sheets first
+            await syncFromGoogleSheets();
+
             updateDashboard();
+        }
+
+        async function refreshDashboard() {
+            const refreshBtn = document.getElementById('refreshDashBtn');
+            if (refreshBtn) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '⏳ Memuat...';
+            }
+
+            await syncFromGoogleSheets();
+            updateDashboard();
+
+            if (refreshBtn) {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '🔄 Refresh';
+            }
         }
 
         function populateDashFilters() {
             const areaFilter = document.getElementById('dashFilterArea');
             const asFilter = document.getElementById('dashFilterAS');
+            if (!areaFilter || !asFilter) return;
 
             // Populate Area filter
             let availableAreas = [];
-            if (currentUser.role === 'admin') {
+            if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                 availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
             } else if (currentUser.role === 'bm') {
                 const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
@@ -2303,9 +2865,11 @@
         }
 
         function onDashAreaFilterChange() {
-            const areaId = document.getElementById('dashFilterArea').value;
+            const areaFilterEl = document.getElementById('dashFilterArea');
             const asFilter = document.getElementById('dashFilterAS');
+            if (!areaFilterEl || !asFilter) return;
 
+            const areaId = areaFilterEl.value;
             if (areaId) {
                 // Show only AS for selected area
                 const areaData = AREA_DATA[areaId];
@@ -2319,8 +2883,10 @@
         }
 
         function updateDashboard() {
-            const areaFilter = document.getElementById('dashFilterArea').value;
-            const asFilter = document.getElementById('dashFilterAS').value;
+            const areaFilterEl = document.getElementById('dashFilterArea');
+            const asFilterEl = document.getElementById('dashFilterAS');
+            const areaFilter = areaFilterEl ? areaFilterEl.value : '';
+            const asFilter = asFilterEl ? asFilterEl.value : '';
 
             // Get stores based on filter
             let stores = [];
@@ -2363,41 +2929,362 @@
 
             // Calculate metrics
             const visitCount = monthlyVisits.length;
-            const target = stores.length * VISIT_TARGET_PER_STORE;
-            const progress = target > 0 ? Math.round((visitCount / target) * 100) : 0;
             const avgScore = monthlyVisits.length > 0 ? Math.round(monthlyVisits.reduce((sum, v) => sum + v.score, 0) / monthlyVisits.length) : 0;
 
-            // Visited stores this month
+            // Visited stores this month (unique)
             const visitedStores = [...new Set(monthlyVisits.map(v => v.storeName))];
             const pendingStores = stores.filter(s => !visitedStores.includes(s.store));
 
-            // Update dashboard
+            // Coverage = unique stores visited / total stores
+            const totalStores = stores.length;
+            const coverage = totalStores > 0 ? Math.round((visitedStores.length / totalStores) * 100) : 0;
+
+            // Update dashboard cards
             document.getElementById('dashVisitCount').textContent = visitCount;
-            document.getElementById('dashVisitTarget').textContent = `Target: ${target}`;
-            document.getElementById('dashProgress').textContent = `${Math.min(progress, 100)}%`;
+            document.getElementById('dashVisitTarget').textContent = `dari ${totalStores} toko`;
+            document.getElementById('dashProgress').textContent = `${coverage}%`;
+            document.getElementById('dashCoverageSub').textContent = `${visitedStores.length}/${totalStores} Store`;
             document.getElementById('dashAvgScore').textContent = avgScore > 0 ? avgScore : '-';
             document.getElementById('dashScoreStatus').textContent = avgScore >= 80 ? 'Good' : avgScore >= 60 ? 'Average' : avgScore > 0 ? 'Poor' : '-';
             document.getElementById('dashPendingStore').textContent = pendingStores.length;
 
-            // Progress ring
+            // Progress ring (now based on coverage)
             const ring = document.getElementById('progressRing');
             const circumference = 2 * Math.PI * 25;
-            const offset = circumference - (Math.min(progress, 100) / 100) * circumference;
+            const offset = circumference - (Math.min(coverage, 100) / 100) * circumference;
             ring.style.strokeDashoffset = offset;
             ring.classList.remove('warning', 'danger');
-            if (progress < 50) ring.classList.add('danger');
-            else if (progress < 80) ring.classList.add('warning');
+            if (coverage < 50) ring.classList.add('danger');
+            else if (coverage < 80) ring.classList.add('warning');
 
-            // Store status list - show area info for BM
-            document.getElementById('storeStatusBadge').textContent = `${visitedStores.length}/${stores.length} Store`;
+            // Store status list (if element exists)
+            const storeStatusBadge = document.getElementById('storeStatusBadge');
             const statusList = document.getElementById('storeStatusList');
-            statusList.innerHTML = stores.map(s => {
-                const isVisited = visitedStores.includes(s.store);
-                const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin') && !areaFilter;
-                return `<div class="store-status-item ${isVisited ? 'visited' : 'not-visited'}">
-                    <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
-                    <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
-                </div>`;
+            if (storeStatusBadge) {
+                storeStatusBadge.textContent = `${visitedStores.length}/${stores.length} Store`;
+            }
+            if (statusList) {
+                statusList.innerHTML = stores.map(s => {
+                    const isVisited = visitedStores.includes(s.store);
+                    const showArea = (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') && !areaFilter;
+                    return `<div class="store-status-item ${isVisited ? 'visited' : 'not-visited'}">
+                        <span class="status-icon">${isVisited ? '&#9989;' : '&#10060;'}</span>
+                        <span>${s.store}${showArea ? ' <small style="opacity:0.7;">(' + s.area + ')</small>' : ''}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        // ========================================
+        // CHART DASHBOARD (BM/HO)
+        // ========================================
+        let storeScoreChartInstance = null;
+
+        function initChartDashboard() {
+            if (currentUser.role !== 'bm' && currentUser.role !== 'ho' && currentUser.role !== 'admin') return;
+
+            const now = new Date();
+
+            // Set current month as selected
+            const monthFilter = document.getElementById('chartMonthFilter');
+            monthFilter.value = String(now.getMonth() + 1);
+
+            // Populate year filter (current year and 2 years back)
+            const yearFilter = document.getElementById('chartYearFilter');
+            const currentYear = now.getFullYear();
+            let yearOptions = '';
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const selected = y === currentYear ? 'selected' : '';
+                yearOptions += `<option value="${y}" ${selected}>${y}</option>`;
+            }
+            yearFilter.innerHTML = yearOptions;
+
+            // Populate area filter
+            const areaFilter = document.getElementById('chartAreaFilter');
+            let availableAreas = [];
+            if (currentUser.role === 'admin' || currentUser.role === 'ho') {
+                availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
+            } else if (currentUser.role === 'bm') {
+                const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                bmAreas.forEach(areaId => {
+                    const area = AREA_DATA[areaId];
+                    if (area) availableAreas.push({ id: areaId, name: area.name });
+                });
+            }
+            availableAreas.sort((a, b) => {
+                const order = ['bali1', 'bali2', 'bali3', 'jatim', 'lombok', 'jakarta', 'sulawesi', 'sumatera', 'batam'];
+                return order.indexOf(a.id) - order.indexOf(b.id);
+            });
+            areaFilter.innerHTML = '<option value="">Semua Area</option>' + availableAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+            updateChartDashboard();
+        }
+
+        function updateChartDashboard() {
+            const month = parseInt(document.getElementById('chartMonthFilter').value);
+            const year = parseInt(document.getElementById('chartYearFilter').value);
+            const areaValue = document.getElementById('chartAreaFilter').value;
+
+            if (!month || !year) return;
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+
+            // Get stores based on filter
+            let stores = [];
+            if (areaValue) {
+                const areaData = AREA_DATA[areaValue];
+                if (areaData) {
+                    stores = areaData.stores.map(s => ({ store: s, area: areaData.name, areaId: areaValue }));
+                }
+            } else {
+                // All stores for this user
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
+                    for (const [areaId, area] of Object.entries(AREA_DATA)) {
+                        area.stores.forEach(s => stores.push({ store: s, area: area.name, areaId }));
+                    }
+                } else if (currentUser.role === 'bm') {
+                    const bmAreas = Array.isArray(currentUser.area) ? currentUser.area : [currentUser.area];
+                    bmAreas.forEach(areaId => {
+                        const area = AREA_DATA[areaId];
+                        if (area) {
+                            area.stores.forEach(s => stores.push({ store: s, area: area.name, areaId }));
+                        }
+                    });
+                }
+            }
+
+            // Filter visits by selected month
+            const monthlyVisits = archive.filter(v => {
+                const vDate = new Date(v.visitDate);
+                return vDate.getMonth() === (month - 1) && vDate.getFullYear() === year;
+            });
+
+            // Calculate score per store
+            const storeData = stores.map(s => {
+                const storeVisits = monthlyVisits.filter(v => v.storeName === s.store);
+                const visitCount = storeVisits.length;
+                const avgScore = visitCount > 0 ? Math.round(storeVisits.reduce((sum, v) => sum + (v.score || 0), 0) / visitCount) : null;
+                const lastVisit = storeVisits.length > 0 ? storeVisits[0] : null;
+                return {
+                    ...s,
+                    visitCount,
+                    avgScore,
+                    lastVisit,
+                    category: avgScore === null ? 'none' : avgScore >= 80 ? 'good' : avgScore >= 60 ? 'average' : 'poor'
+                };
+            });
+
+            // Sort by score (null at end)
+            storeData.sort((a, b) => {
+                if (a.avgScore === null && b.avgScore === null) return 0;
+                if (a.avgScore === null) return 1;
+                if (b.avgScore === null) return -1;
+                return b.avgScore - a.avgScore;
+            });
+
+            // Update chart
+            renderStoreScoreChart(storeData);
+
+            // Update table
+            renderStoreScoreTable(storeData);
+        }
+
+        function renderStoreScoreChart(storeData) {
+            const ctx = document.getElementById('storeScoreChart').getContext('2d');
+
+            if (storeScoreChartInstance) {
+                storeScoreChartInstance.destroy();
+            }
+
+            const labels = storeData.map(s => s.store);
+            const scores = storeData.map(s => s.avgScore || 0);
+            const colors = storeData.map(s => {
+                if (s.avgScore === null) return 'rgba(108, 117, 125, 0.7)';
+                if (s.avgScore >= 80) return 'rgba(40, 167, 69, 0.8)';
+                if (s.avgScore >= 60) return 'rgba(255, 193, 7, 0.8)';
+                return 'rgba(220, 53, 69, 0.8)';
+            });
+
+            storeScoreChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score',
+                        data: scores,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1').replace('0.7', '1')),
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const store = storeData[context.dataIndex];
+                                    if (store.avgScore === null) return 'Belum ada visit';
+                                    return `Score: ${store.avgScore}% (${store.visitCount}x visit)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: 'rgba(255,255,255,0.7)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderStoreScoreTable(storeData) {
+            const tbody = document.getElementById('storeScoreTableBody');
+
+            if (storeData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;opacity:0.6;">Tidak ada data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = storeData.map(s => {
+                const scoreText = s.avgScore !== null ? `${s.avgScore}%` : '-';
+                const categoryLabel = s.category === 'good' ? 'Good' : s.category === 'average' ? 'Average' : s.category === 'poor' ? 'Poor' : 'Belum Visit';
+
+                return `<tr>
+                    <td><strong>${s.store}</strong></td>
+                    <td>${s.area}</td>
+                    <td><strong>${scoreText}</strong></td>
+                    <td><span class="score-badge ${s.category}">${categoryLabel}</span></td>
+                    <td><span class="visit-count-badge">${s.visitCount}x</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ========================================
+        // AS DASHBOARD FUNCTIONS (Visit Count Only)
+        // ========================================
+        function initASDashboard() {
+            // For AS users and BM with AS access (Sumatera, Batam)
+            const userArea = currentUser.area;
+            const areaData = typeof userArea === 'string' ? AREA_DATA[userArea] : null;
+            const bmHasAsAccess = areaData && areaData.bmHasAsAccess && currentUser.role === 'bm';
+
+            if (currentUser.role !== 'as' && !bmHasAsAccess) return;
+
+            const now = new Date();
+
+            // Set current month as selected
+            const monthFilter = document.getElementById('asChartMonthFilter');
+            if (monthFilter) monthFilter.value = String(now.getMonth() + 1);
+
+            // Populate year filter
+            const yearFilter = document.getElementById('asChartYearFilter');
+            if (yearFilter) {
+                const currentYear = now.getFullYear();
+                let yearOptions = '';
+                for (let y = currentYear; y >= currentYear - 2; y--) {
+                    const selected = y === currentYear ? 'selected' : '';
+                    yearOptions += `<option value="${y}" ${selected}>${y}</option>`;
+                }
+                yearFilter.innerHTML = yearOptions;
+            }
+
+            // Show AS Dashboard
+            document.getElementById('asDashboard').style.display = 'block';
+
+            updateASDashboard();
+        }
+
+        async function refreshASDashboard() {
+            await syncFromGoogleSheets();
+            updateASDashboard();
+        }
+
+        function updateASDashboard() {
+            const monthEl = document.getElementById('asChartMonthFilter');
+            const yearEl = document.getElementById('asChartYearFilter');
+            if (!monthEl || !yearEl) return;
+
+            const month = parseInt(monthEl.value);
+            const year = parseInt(yearEl.value);
+
+            if (!month || !year) return;
+
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+
+            // Get stores for AS's area
+            let stores = [];
+            const area = AREA_DATA[currentUser.area];
+            if (area) {
+                stores = area.stores.map(s => ({ store: s, area: area.name }));
+            }
+
+            // Filter visits by selected month and AS's name
+            const monthlyVisits = archive.filter(v => {
+                const vDate = new Date(v.visitDate);
+                return vDate.getMonth() === (month - 1) &&
+                       vDate.getFullYear() === year &&
+                       v.visitorName === currentUser.name;
+            });
+
+            // Calculate visit count per store
+            const storeData = stores.map(s => {
+                const storeVisits = monthlyVisits.filter(v => v.storeName === s.store);
+                const visitCount = storeVisits.length;
+                return {
+                    ...s,
+                    visitCount,
+                    status: visitCount > 0 ? 'visited' : 'pending'
+                };
+            });
+
+            // Sort: pending first, then by store name
+            storeData.sort((a, b) => {
+                if (a.status !== b.status) {
+                    return a.status === 'pending' ? -1 : 1;
+                }
+                return a.store.localeCompare(b.store);
+            });
+
+            // Render table
+            renderASStoreTable(storeData);
+        }
+
+        function renderASStoreTable(storeData) {
+            const tbody = document.getElementById('asStoreTableBody');
+            if (!tbody) return;
+
+            if (storeData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;opacity:0.6;">Tidak ada data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = storeData.map(s => {
+                const statusLabel = s.status === 'visited' ? 'Sudah Visit' : 'Belum Visit';
+                const statusClass = s.status === 'visited' ? 'good' : 'none';
+                const visitText = s.visitCount > 0 ? `${s.visitCount}x` : '-';
+
+                return `<tr>
+                    <td><strong>${s.store}</strong></td>
+                    <td>${s.area}</td>
+                    <td style="text-align:center;"><span class="visit-count-badge">${visitText}</span></td>
+                    <td><span class="score-badge ${statusClass}">${statusLabel}</span></td>
+                </tr>`;
             }).join('');
         }
 
@@ -2523,12 +3410,37 @@
             locationEl.textContent = 'Mengambil lokasi...';
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const lat = position.coords.latitude.toFixed(6);
                     const lng = position.coords.longitude.toFixed(6);
-                    visitProofData.location = { lat, lng, accuracy: position.coords.accuracy };
 
-                    locationEl.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9;">${lat}, ${lng}</a>`;
+                    // Get address from coordinates (reverse geocoding)
+                    let address = '';
+                    try {
+                        locationEl.textContent = 'Mengambil alamat...';
+                        const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                            headers: { 'Accept-Language': 'id' }
+                        });
+                        const geoData = await geoResponse.json();
+                        if (geoData && geoData.display_name) {
+                            address = geoData.display_name;
+                        }
+                    } catch (e) {
+                        console.log('Geocoding error:', e);
+                    }
+
+                    visitProofData.location = { lat, lng, accuracy: position.coords.accuracy, address };
+
+                    // Display address and coordinates
+                    if (address) {
+                        locationEl.innerHTML = `
+                            <div style="font-size: 13px; margin-bottom: 5px;">📍 ${address}</div>
+                            <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9; font-size: 12px;">${lat}, ${lng} ↗</a>
+                        `;
+                    } else {
+                        locationEl.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color: #90caf9;">${lat}, ${lng}</a>`;
+                    }
+
                     btn.textContent = 'OK';
                     btn.className = 'status success';
                     btn.disabled = true;
@@ -2611,14 +3523,281 @@
         // ========================================
         // ARCHIVE FUNCTIONS
         // ========================================
-        function openArchive() {
-            loadArchive();
+        async function openArchive() {
+            // Show loading
             document.getElementById('archiveModal').classList.add('show');
+            document.getElementById('archiveList').innerHTML = '<p style="text-align:center;padding:20px;">Memuat data dari server...</p>';
+
+            // Sync from Google Sheets first
+            await syncFromGoogleSheets();
+
+            // Then load archive
+            loadArchive();
+        }
+
+        // Sync data from Google Sheets to localStorage
+        async function syncFromGoogleSheets() {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_API + '?action=get');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const sheetsData = result.data;
+
+                    // Get list of all formNo from Google Sheets
+                    const sheetsFormNos = sheetsData.map(item => item['Form No']).filter(Boolean);
+
+                    // Build new archive from Google Sheets data
+                    const newArchive = [];
+
+                    sheetsData.forEach(sheetItem => {
+                        const formNo = sheetItem['Form No'];
+                        if (!formNo) return;
+
+                        const bmReviewText = sheetItem['BM Riview'] || sheetItem['BM Review'] || '';
+                        newArchive.push({
+                            formNo: formNo,
+                            storeName: sheetItem['Store Name'] || '',
+                            visitDate: sheetItem['Visit Date'] || '',
+                            score: sheetItem['Score'] || 0,
+                            visitorName: sheetItem['Visitor Name'] || '',
+                            areaName: sheetItem['Area Name'] || '',
+                            comment: sheetItem['Comment'] || '',
+                            createdAt: sheetItem['Created At'] || '',
+                            bmReview: bmReviewText ? {
+                                comment: bmReviewText,
+                                reviewedAt: sheetItem['BM Riview Date'] || sheetItem['BM Review Date'] || ''
+                            } : null,
+                            pdfLink: sheetItem['PDFLink'] || '',
+                            answers: {},
+                            fromSheets: true
+                        });
+                    });
+
+                    // Sort by date descending
+                    newArchive.sort((a, b) => new Date(b.createdAt || b.visitDate) - new Date(a.createdAt || a.visitDate));
+
+                    // Replace localStorage with fresh data from Google Sheets
+                    localStorage.setItem('visit_archive', JSON.stringify(newArchive));
+                    console.log('Synced ' + sheetsData.length + ' records from Google Sheets (full refresh)');
+                }
+            } catch (e) {
+                console.log('Sync error:', e);
+            }
         }
 
         function closeArchive() {
             document.getElementById('archiveModal').classList.remove('show');
         }
+
+        // ========================================
+        // RULES MODAL FUNCTIONS
+        // ========================================
+        function openRules() {
+            document.getElementById('rulesModal').classList.add('show');
+        }
+
+        function closeRules() {
+            document.getElementById('rulesModal').classList.remove('show');
+        }
+
+        // Close rules modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'rulesModal') closeRules();
+        });
+
+        // ========================================
+        // ADMIN PANEL FUNCTIONS
+        // ========================================
+        function openAdminPanel() {
+            document.getElementById('adminPanelModal').classList.add('show');
+            loadUserListAdmin();
+            populateAreaDropdown();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanelModal').classList.remove('show');
+        }
+
+        function populateAreaDropdown() {
+            const select = document.getElementById('newArea');
+            select.innerHTML = '<option value="all">Semua Area</option>';
+            for (const [areaId, area] of Object.entries(AREA_DATA)) {
+                const option = document.createElement('option');
+                option.value = areaId;
+                option.textContent = area.name;
+                select.appendChild(option);
+            }
+        }
+
+        function loadUserListAdmin() {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const container = document.getElementById('userListAdmin');
+
+            if (users.length === 0) {
+                container.innerHTML = '<p>Tidak ada user.</p>';
+                return;
+            }
+
+            let html = '<table style="width:100%;border-collapse:collapse;">';
+            html += '<thead><tr style="background:#f8f9fa;"><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Username</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Nama</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Email</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Role</th><th style="padding:10px;text-align:left;border-bottom:2px solid #dee2e6;">Area</th><th style="padding:10px;text-align:center;border-bottom:2px solid #dee2e6;">Aksi</th></tr></thead><tbody>';
+
+            const roleLabels = { 'admin': 'Administrator', 'bm': 'Branch Manager', 'as': 'Area Supervisor', 'ho': 'Head Office' };
+
+            users.forEach(user => {
+                const areaLabel = user.area === 'all' ? 'Semua' : (Array.isArray(user.area) ? user.area.map(a => AREA_DATA[a]?.name || a).join(', ') : (AREA_DATA[user.area]?.name || user.area));
+                const userEmail = user.email || '-';
+
+                html += `<tr style="border-bottom:1px solid #dee2e6;">
+                    <td style="padding:10px;">${user.username}</td>
+                    <td style="padding:10px;">${user.name}</td>
+                    <td style="padding:10px;font-size:12px;">${userEmail}</td>
+                    <td style="padding:10px;"><span style="background:${user.role === 'admin' ? '#dc3545' : user.role === 'ho' ? '#6f42c1' : user.role === 'bm' ? '#007bff' : '#28a745'};color:white;padding:2px 8px;border-radius:10px;font-size:12px;">${roleLabels[user.role] || user.role}</span></td>
+                    <td style="padding:10px;font-size:12px;">${areaLabel}</td>
+                    <td style="padding:10px;text-align:center;">
+                        <button onclick="editUser('${user.username}')" style="padding:5px 10px;background:#6c757d;color:white;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Edit User">&#9998;</button>
+                        <button onclick="changeUserEmail('${user.username}')" style="padding:5px 10px;background:#17a2b8;color:white;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Email">&#9993;</button>
+                        <button onclick="changeUserPassword('${user.username}')" style="padding:5px 10px;background:#ffc107;color:#000;border:none;border-radius:3px;cursor:pointer;margin-right:5px;" title="Ubah Password">&#128273;</button>
+                        <button onclick="deleteUser('${user.username}')" style="padding:5px 10px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;" title="Hapus">&#128465;</button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function addNewUser() {
+            const username = document.getElementById('newUsername').value.trim().toLowerCase();
+            const password = document.getElementById('newPassword').value;
+            const name = document.getElementById('newName').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
+            const role = document.getElementById('newRole').value;
+            const area = document.getElementById('newArea').value;
+
+            if (!username || !password || !name || !role) {
+                alert('Username, password, nama, dan role harus diisi!');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+
+            if (users.some(u => u.username === username)) {
+                alert('Username sudah ada!');
+                return;
+            }
+
+            users.push({
+                username,
+                password,
+                name,
+                email: email || '',
+                role,
+                area: role === 'ho' || role === 'admin' ? 'all' : area
+            });
+            localStorage.setItem('visit_users', JSON.stringify(users));
+
+            // Clear form
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newEmail').value = '';
+            document.getElementById('newRole').value = '';
+            document.getElementById('newArea').value = 'all';
+
+            alert('User berhasil ditambahkan!');
+            loadUserListAdmin();
+        }
+
+        function changeUserEmail(username) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const user = users.find(u => u.username === username);
+            const currentEmail = user ? (user.email || '') : '';
+
+            const newEmail = prompt('Masukkan email untuk ' + username + ':', currentEmail);
+            if (newEmail === null) return; // cancelled
+
+            const userIndex = users.findIndex(u => u.username === username);
+            if (userIndex === -1) {
+                alert('User tidak ditemukan!');
+                return;
+            }
+
+            users[userIndex].email = newEmail;
+            localStorage.setItem('visit_users', JSON.stringify(users));
+            alert('Email berhasil diubah!');
+            loadUserListAdmin();
+        }
+
+        function changeUserPassword(username) {
+            const newPassword = prompt('Masukkan password baru untuk ' + username + ':');
+            if (!newPassword) return;
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const userIndex = users.findIndex(u => u.username === username);
+
+            if (userIndex === -1) {
+                alert('User tidak ditemukan!');
+                return;
+            }
+
+            users[userIndex].password = newPassword;
+            localStorage.setItem('visit_users', JSON.stringify(users));
+            alert('Password berhasil diubah!');
+        }
+
+        function deleteUser(username) {
+            if (!confirm('Hapus user ' + username + '?')) return;
+
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const filtered = users.filter(u => u.username !== username);
+            localStorage.setItem('visit_users', JSON.stringify(filtered));
+
+            alert('User berhasil dihapus!');
+            loadUserListAdmin();
+        }
+
+        function editUser(username) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const userIndex = users.findIndex(u => u.username === username);
+
+            if (userIndex === -1) {
+                alert('User tidak ditemukan!');
+                return;
+            }
+
+            const user = users[userIndex];
+
+            // Prompt for new username
+            const newUsername = prompt('Edit Username (kosongkan jika tidak ingin mengubah):', user.username);
+            if (newUsername === null) return; // cancelled
+
+            // Prompt for new name
+            const newName = prompt('Edit Nama (kosongkan jika tidak ingin mengubah):', user.name);
+            if (newName === null) return; // cancelled
+
+            // Check if new username already exists (if changed)
+            const finalUsername = newUsername.trim().toLowerCase() || user.username;
+            const finalName = newName.trim() || user.name;
+
+            if (finalUsername !== user.username && users.some(u => u.username === finalUsername)) {
+                alert('Username sudah digunakan oleh user lain!');
+                return;
+            }
+
+            // Update user data
+            users[userIndex].username = finalUsername;
+            users[userIndex].name = finalName;
+            localStorage.setItem('visit_users', JSON.stringify(users));
+
+            alert('User berhasil diupdate!');
+            loadUserListAdmin();
+        }
+
+        // Close admin panel when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'adminPanelModal') closeAdminPanel();
+        });
 
         // Helper: get area name for a store
         function getAreaForStore(storeName) {
@@ -2628,6 +3807,70 @@
                 }
             }
             return null;
+        }
+
+        // Helper: get user by username
+        function getUserByUsername(username) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            return users.find(u => u.username === username.toLowerCase());
+        }
+
+        // Helper: get user by name
+        function getUserByName(name) {
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            return users.find(u => u.name === name);
+        }
+
+        // Helper: get BM email for a store's area
+        function getBMEmailForStore(storeName) {
+            const area = getAreaForStore(storeName);
+            if (!area) return null;
+
+            const areaData = AREA_DATA[area.id];
+            if (!areaData || !areaData.bm) return null;
+
+            // Find BM user by name
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const bmUser = users.find(u => u.name === areaData.bm && u.role === 'bm');
+            return bmUser ? bmUser.email : null;
+        }
+
+        // Helper: get AS email for a store's area
+        function getASEmailForStore(storeName) {
+            const area = getAreaForStore(storeName);
+            if (!area) return null;
+
+            const areaData = AREA_DATA[area.id];
+            if (!areaData || !areaData.as) return null;
+
+            // Find AS user by name
+            const users = JSON.parse(localStorage.getItem('visit_users') || '[]');
+            const asUser = users.find(u => u.name === areaData.as && u.role === 'as');
+            return asUser ? asUser.email : null;
+        }
+
+        // Send email notification via Google Apps Script
+        async function sendEmailNotification(type, data) {
+            try {
+                const payload = {
+                    action: 'sendEmail',
+                    type: type, // 'visit' or 'review'
+                    ...data
+                };
+
+                const response = await fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                console.log('Email notification result:', result);
+                return result;
+            } catch (error) {
+                console.error('Failed to send email notification:', error);
+                return { success: false, error: error.message };
+            }
         }
 
         // Helper: get stores for an area
@@ -2651,11 +3894,13 @@
             const bmDashboard = document.getElementById('bmDashboard');
             const leaderboard = document.getElementById('leaderboard');
             const filterAS = document.getElementById('filterAS');
+            const filterBM = document.getElementById('filterBM');
             const filterArea = document.getElementById('filterArea');
 
-            if (currentUser.role === 'bm' || currentUser.role === 'admin') {
+            if (currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'ho') {
                 bmDashboard.style.display = 'grid';
                 leaderboard.style.display = 'block';
+                filterBM.style.display = 'block';
                 filterAS.style.display = 'block';
                 filterArea.style.display = 'block';
 
@@ -2699,8 +3944,8 @@
 
                 // Area filter - show ALL areas managed by BM (not just visited)
                 let availableAreas = [];
-                if (currentUser.role === 'admin') {
-                    // Admin sees all areas
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
+                    // Admin/HO sees all areas
                     availableAreas = Object.entries(AREA_DATA).map(([id, area]) => ({ id, name: area.name }));
                 } else if (currentUser.role === 'bm') {
                     // BM sees their managed areas
@@ -2717,6 +3962,16 @@
                 });
                 filterArea.innerHTML = '<option value="">Semua Area</option>' + availableAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 
+                // BM filter - show ALL unique BMs in managed areas
+                let availableBM = [];
+                availableAreas.forEach(area => {
+                    const areaData = AREA_DATA[area.id];
+                    if (areaData && areaData.bm && !availableBM.includes(areaData.bm)) {
+                        availableBM.push(areaData.bm);
+                    }
+                });
+                filterBM.innerHTML = '<option value="">Semua BM</option>' + availableBM.map(n => `<option value="${n}">${n}</option>`).join('');
+
                 // AS filter - show ALL AS in managed areas (not just visited)
                 let availableAS = [];
                 availableAreas.forEach(area => {
@@ -2729,6 +3984,7 @@
             } else {
                 bmDashboard.style.display = 'none';
                 leaderboard.style.display = 'none';
+                filterBM.style.display = 'none';
                 filterAS.style.display = 'none';
                 filterArea.style.display = 'none';
             }
@@ -2763,7 +4019,7 @@
                 let allAS = [];
                 let allStores = [];
 
-                if (currentUser.role === 'admin') {
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                     Object.values(AREA_DATA).forEach(area => {
                         if (area.as) allAS.push(area.as);
                         allStores = allStores.concat(area.stores);
@@ -2812,7 +4068,7 @@
             } else {
                 // Show all stores from user's managed areas
                 let allStores = [];
-                if (currentUser.role === 'admin') {
+                if (currentUser.role === 'admin' || currentUser.role === 'ho') {
                     Object.values(AREA_DATA).forEach(area => {
                         allStores = allStores.concat(area.stores);
                     });
@@ -2829,10 +4085,42 @@
             filterArchive();
         }
 
+        // When BM filter changes, update area, AS, and store filter options
+        function onBMFilterChange() {
+            const bmName = document.getElementById('filterBM').value;
+            const areaFilter = document.getElementById('filterArea');
+            const asFilter = document.getElementById('filterAS');
+            const storeFilter = document.getElementById('filterStore');
+
+            if (bmName) {
+                // Find areas managed by this BM
+                let bmAreas = [];
+                let bmAS = [];
+                let bmStores = [];
+                for (const [id, area] of Object.entries(AREA_DATA)) {
+                    if (area.bm === bmName) {
+                        bmAreas.push({ id, name: area.name });
+                        if (area.as) bmAS.push(area.as);
+                        bmStores = bmStores.concat(area.stores);
+                    }
+                }
+                areaFilter.innerHTML = '<option value="">Semua Area</option>' + bmAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+                asFilter.innerHTML = '<option value="">Semua AS</option>' + bmAS.map(n => `<option value="${n}">${n}</option>`).join('');
+                storeFilter.innerHTML = '<option value="">Semua Store</option>' + bmStores.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else {
+                // Reset to show all
+                openArchive();
+                return;
+            }
+
+            filterArchive();
+        }
+
         function filterArchive() {
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
             const stores = getUserStores().map(s => s.store);
             const areaFilter = document.getElementById('filterArea').value;
+            const bmFilter = document.getElementById('filterBM').value;
             const storeFilter = document.getElementById('filterStore').value;
             const asFilter = document.getElementById('filterAS').value;
             const scoreFilter = document.getElementById('filterScore').value;
@@ -2840,6 +4128,17 @@
             let filtered = archive;
             if (currentUser.role === 'as') filtered = filtered.filter(a => a.visitorName === currentUser.name);
             else if (currentUser.role === 'bm') filtered = filtered.filter(a => stores.includes(a.storeName));
+
+            // Filter by BM - get all stores managed by this BM
+            if (bmFilter) {
+                let bmStores = [];
+                for (const [id, area] of Object.entries(AREA_DATA)) {
+                    if (area.bm === bmFilter) {
+                        bmStores = bmStores.concat(area.stores);
+                    }
+                }
+                filtered = filtered.filter(a => bmStores.includes(a.storeName));
+            }
 
             // Filter by area
             if (areaFilter) {
@@ -2863,7 +4162,7 @@
                 return;
             }
             const showScore = currentUser.role !== 'as';
-            const canClick = currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'as';
+            const canClick = currentUser.role === 'bm' || currentUser.role === 'admin' || currentUser.role === 'as' || currentUser.role === 'ho';
             const canDelete = currentUser.role === 'admin' || currentUser.role === 'bm';
             list.innerHTML = archive.map((item, idx) => {
                 const hasProof = item.visitProof && item.visitProof.photo;
@@ -2899,6 +4198,20 @@
             // Remove item from archive
             archive.splice(itemIndex, 1);
             localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Delete from Google Sheets
+            try {
+                fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        formNo: formNo
+                    })
+                });
+            } catch (e) {
+                console.log('Google Sheets delete error:', e);
+            }
 
             // Refresh archive list
             filterArchive();
@@ -3065,14 +4378,45 @@
             const idx = archive.findIndex(a => a.formNo === currentDetailFormNo);
             if (idx === -1) return;
 
+            const reviewedAt = new Date().toISOString();
+
             archive[idx].bmReview = {
                 comment: reviewText,
                 reviewerName: currentUser.name,
                 reviewerRole: currentUser.role,
-                reviewedAt: new Date().toISOString()
+                reviewedAt: reviewedAt
             };
 
             localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Get AS email for notification
+            const storeName = archive[idx].storeName;
+            const visitorName = archive[idx].visitorName;
+            const asEmail = getASEmailForStore(storeName);
+
+            // Sync BM Review to Google Sheets with notification
+            try {
+                fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateReview',
+                        formNo: currentDetailFormNo,
+                        bmReview: reviewText,
+                        bmReviewBy: currentUser.name,
+                        bmReviewDate: reviewedAt,
+                        // Email notification data (BM review -> notify AS)
+                        sendNotification: asEmail ? true : false,
+                        notificationType: 'review',
+                        notifyEmail: asEmail || '',
+                        storeName: storeName,
+                        visitorName: visitorName
+                    })
+                });
+            } catch (e) {
+                console.log('Google Sheets review sync error:', e);
+            }
+
             alert('Review berhasil disimpan!');
             closeArchiveDetail();
             loadArchive();
@@ -3082,6 +4426,311 @@
         document.addEventListener('click', function(e) {
             if (e.target.id === 'archiveDetailModal') closeArchiveDetail();
         });
+
+        // ========================================
+        // SAVE VISIT
+        // ========================================
+        async function saveVisit() {
+            const storeName = document.getElementById('storeName').value;
+            const visitDate = document.getElementById('visitDate').value;
+            const visitorName = document.getElementById('visitorName').value.trim();
+            const comment = document.getElementById('commentImprovement').value.trim();
+
+            // Validasi
+            if (!storeName) { alert('Pilih store terlebih dahulu!'); return; }
+            if (!visitProofData.photo) { alert('Upload foto bukti visit terlebih dahulu!'); return; }
+            if (!visitProofData.location && !confirm('Lokasi GPS belum diambil. Lanjutkan tanpa lokasi?')) return;
+            if (Object.keys(checklistAnswers).length < 42 && !confirm('Checklist belum lengkap (' + Object.keys(checklistAnswers).length + '/42). Lanjutkan?')) return;
+
+            // Hitung score
+            let yesCount = 0, noCount = 0;
+            Object.values(checklistAnswers).forEach(a => {
+                if (a === 'yes') yesCount++;
+                else if (a === 'no') noCount++;
+            });
+            const score = (yesCount + noCount) > 0 ? Math.round((yesCount / (yesCount + noCount)) * 100) : 0;
+
+            // Generate form number
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const formNo = `VIS-${dateStr}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
+
+            // Get area name
+            const area = getAreaForStore(storeName);
+            const areaName = area ? area.name : '';
+
+            const createdAt = new Date().toISOString();
+
+            // Show loading
+            const saveBtn = document.querySelector('.btn-primary[onclick="saveVisit()"]');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '⏳ Menyimpan...';
+            saveBtn.disabled = true;
+
+            // Generate PDF
+            let pdfBase64 = '';
+            try {
+                pdfBase64 = generatePdfBase64(formNo, storeName, visitDate, visitorName, areaName, score, comment);
+            } catch (e) {
+                console.log('PDF generation error:', e);
+            }
+
+            // Data to save
+            const visitData = {
+                formNo,
+                storeName,
+                visitDate,
+                score,
+                answers: { ...checklistAnswers },
+                remarks: { ...checklistRemarks },
+                photos: { ...checklistPhotos },
+                visitorName,
+                areaName,
+                comment,
+                visitProof: {
+                    photo: visitProofData.photo,
+                    timestamp: visitProofData.timestamp,
+                    location: visitProofData.location
+                },
+                createdAt
+            };
+
+            // Save to localStorage
+            const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            archive.unshift(visitData);
+            localStorage.setItem('visit_archive', JSON.stringify(archive));
+
+            // Get BM email for notification
+            const bmEmail = getBMEmailForStore(storeName);
+            console.log('BM Email for notification:', bmEmail);
+
+            // Save to Google Sheets with PDF and send notification
+            try {
+                const savePayload = {
+                    action: 'save',
+                    formNo,
+                    storeName,
+                    visitDate,
+                    score,
+                    visitorName,
+                    areaName,
+                    comment,
+                    createdAt,
+                    pdfBase64,
+                    // Email notification data (AS submit -> notify BM)
+                    sendNotification: bmEmail ? true : false,
+                    notificationType: 'visit',
+                    notifyEmail: bmEmail || ''
+                };
+                console.log('Sending to Google Sheets with notification:', savePayload.sendNotification, savePayload.notifyEmail);
+
+                const response = await fetch(GOOGLE_SHEETS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(savePayload)
+                });
+                const result = await response.json();
+                console.log('Google Sheets response:', result);
+            } catch (e) {
+                console.log('Google Sheets sync error:', e);
+            }
+
+            // Restore button
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+
+            alert('Visit berhasil disimpan! PDF tersimpan di Google Drive.');
+
+            if (confirm('Buat visit baru?')) {
+                resetForm();
+            }
+
+            // Update dashboard
+            initDashboard();
+        }
+
+        // Generate PDF and return as base64 - SIMPLE VERSION
+        function generatePdfBase64(formNo, storeName, visitDate, visitorName, areaName, score, comment) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // ===== HEADER =====
+                doc.setFillColor(26, 26, 46);
+                doc.rect(0, 0, 210, 30, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('STORE VISIT CHECKLIST', 105, 12, { align: 'center' });
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Area Supervisor Visit Report', 105, 19, { align: 'center' });
+                doc.setFontSize(9);
+                doc.text(String(formNo || ''), 105, 26, { align: 'center' });
+
+                // ===== INFO BOX =====
+                let y = 38;
+                const areaInfo = getAreaForStore(storeName);
+                const bmName = areaInfo && AREA_DATA[areaInfo.id] ? AREA_DATA[areaInfo.id].bm || '-' : '-';
+
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.3);
+                doc.rect(15, y - 3, 180, 28);
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+
+                const labelX = 20;
+                const valueX = 55;
+                const labelX2 = 115;
+                const valueX2 = 150;
+
+                // Row 1
+                doc.setFont('helvetica', 'bold');
+                doc.text('Store', labelX, y + 3);
+                doc.text(':', 50, y + 3);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(storeName || ''), valueX, y + 3);
+
+                doc.setFont('helvetica', 'bold');
+                doc.text('Tanggal', labelX2, y + 3);
+                doc.text(':', 145, y + 3);
+                doc.setFont('helvetica', 'normal');
+                try {
+                    doc.text(new Date(visitDate).toLocaleDateString('id-ID'), valueX2, y + 3);
+                } catch(e) {
+                    doc.text(String(visitDate || ''), valueX2, y + 3);
+                }
+
+                // Row 2
+                doc.setFont('helvetica', 'bold');
+                doc.text('Area Supervisor', labelX, y + 11);
+                doc.text(':', 50, y + 11);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(visitorName || ''), valueX, y + 11);
+
+                doc.setFont('helvetica', 'bold');
+                doc.text('Area', labelX2, y + 11);
+                doc.text(':', 145, y + 11);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(areaName || ''), valueX2, y + 11);
+
+                // Row 3
+                doc.setFont('helvetica', 'bold');
+                doc.text('Branch Manager', labelX, y + 19);
+                doc.text(':', 50, y + 19);
+                doc.setFont('helvetica', 'normal');
+                doc.text(bmName, valueX, y + 19);
+
+                // ===== SCORE SUMMARY =====
+                y = 72;
+                let yesCount = 0, noCount = 0, naCount = 0;
+                Object.values(checklistAnswers).forEach(a => {
+                    if (a === 'yes') yesCount++;
+                    else if (a === 'no') noCount++;
+                    else if (a === 'na') naCount++;
+                });
+
+                const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
+                const scoreLabel = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
+
+                doc.setFillColor(...scoreColor);
+                doc.roundedRect(15, y, 35, 18, 2, 2, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${score}%`, 32.5, y + 9, { align: 'center' });
+                doc.setFontSize(8);
+                doc.text(scoreLabel, 32.5, y + 15, { align: 'center' });
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`YES: ${yesCount}`, 58, y + 7);
+                doc.text(`NO: ${noCount}`, 58, y + 14);
+                doc.text(`N/A: ${naCount}`, 85, y + 7);
+                doc.text(`Total: ${yesCount + noCount + naCount}`, 85, y + 14);
+
+                // ===== CHECKLIST TABLE =====
+                y = 95;
+                const categories = [
+                    { key: 'ambiance', name: 'STORE AMBIANCE' },
+                    { key: 'display', name: 'DISPLAY' },
+                    { key: 'admin', name: 'STORE ADMINISTRASI' },
+                    { key: 'cleaning', name: 'STORE CLEANING' },
+                    { key: 'spg', name: 'SPG' },
+                    { key: 'stock', name: 'STOCK' }
+                ];
+
+                const tableLeft = 15;
+                const tableWidth = 180;
+                const colNo = 12;
+
+                categories.forEach(cat => {
+                    if (y > 250) { doc.addPage(); y = 15; }
+
+                    doc.setFillColor(15, 52, 96);
+                    doc.rect(tableLeft, y, tableWidth, 7, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(cat.name, tableLeft + 3, y + 5);
+                    y += 7;
+
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(tableLeft, y, tableWidth, 6, 'F');
+                    doc.setTextColor(80, 80, 80);
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('No', tableLeft + 3, y + 4);
+                    doc.text('Item Checklist', tableLeft + colNo + 3, y + 4);
+                    doc.text('Status', tableLeft + tableWidth - 12, y + 4);
+                    y += 6;
+
+                    doc.setFontSize(8);
+                    CHECKLIST_DATA[cat.key].forEach((item, idx) => {
+                        if (y > 275) { doc.addPage(); y = 15; }
+
+                        const answer = checklistAnswers[item.no] || '-';
+                        const answerText = answer === 'yes' ? 'YES' : answer === 'no' ? 'NO' : answer === 'na' ? 'N/A' : '-';
+                        const rowHeight = 6;
+
+                        if (idx % 2 === 0) {
+                            doc.setFillColor(252, 252, 252);
+                            doc.rect(tableLeft, y, tableWidth, rowHeight, 'F');
+                        }
+
+                        doc.setDrawColor(220, 220, 220);
+                        doc.setLineWidth(0.2);
+                        doc.line(tableLeft, y + rowHeight, tableLeft + tableWidth, y + rowHeight);
+
+                        doc.setTextColor(100, 100, 100);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`${item.no}`, tableLeft + 3, y + 4);
+
+                        doc.setTextColor(0, 0, 0);
+                        let itemText = item.text;
+                        if (itemText.length > 85) itemText = itemText.substring(0, 82) + '...';
+                        doc.text(itemText, tableLeft + colNo + 2, y + 4);
+
+                        if (answer === 'yes') doc.setTextColor(40, 167, 69);
+                        else if (answer === 'no') doc.setTextColor(220, 53, 69);
+                        else doc.setTextColor(150, 150, 150);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(answerText, tableLeft + tableWidth - 5, y + 4, { align: 'right' });
+
+                        y += rowHeight;
+                    });
+
+                    y += 8;
+                });
+
+                const pdfOutput = doc.output('datauristring');
+                return pdfOutput.split(',')[1];
+            } catch (err) {
+                console.error('PDF Error:', err);
+                return '';
+            }
+        }
 
         // ========================================
         // PDF GENERATION
@@ -3096,92 +4745,156 @@
             if (!visitProofData.location && !confirm('Lokasi GPS belum diambil. Lanjutkan tanpa lokasi?')) return;
             if (Object.keys(checklistAnswers).length < 42 && !confirm('Checklist belum lengkap. Lanjutkan?')) return;
 
-            let yesCount = 0, noCount = 0;
-            Object.values(checklistAnswers).forEach(a => { if (a === 'yes') yesCount++; else if (a === 'no') noCount++; });
+            // Check if store already visited this month
+            const existingArchive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
+            const currentMonth = new Date(visitDate).getMonth();
+            const currentYear = new Date(visitDate).getFullYear();
+
+            const storeVisits = existingArchive.filter(v => v.storeName === storeName);
+            const thisMonthVisits = storeVisits.filter(v => {
+                const vDate = new Date(v.visitDate);
+                return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
+            });
+
+            if (thisMonthVisits.length > 0) {
+                const lastVisit = thisMonthVisits[0];
+                const lastVisitDate = new Date(lastVisit.visitDate).toLocaleDateString('id-ID');
+                const totalVisits = storeVisits.length;
+
+                const confirmMsg = `Store "${storeName}" sudah di-visit bulan ini!\n\n` +
+                    `Visit terakhir: ${lastVisitDate}\n` +
+                    `Total visit store ini: ${totalVisits}x\n\n` +
+                    `Lanjutkan visit baru?`;
+
+                if (!confirm(confirmMsg)) return;
+            }
+
+            let yesCount = 0, noCount = 0, naCount = 0;
+            Object.values(checklistAnswers).forEach(a => {
+                if (a === 'yes') yesCount++;
+                else if (a === 'no') noCount++;
+                else if (a === 'na') naCount++;
+            });
             const score = (yesCount + noCount) > 0 ? Math.round((yesCount / (yesCount + noCount)) * 100) : 0;
+            const comment = document.getElementById('commentImprovement').value.trim();
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Header
-            doc.setFillColor(26, 26, 46);
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text('STORE VISIT CHECKLIST', 105, 15, { align: 'center' });
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Area Supervisor Visit Report', 105, 23, { align: 'center' });
-
             // Generate form number
             const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
             const formNo = `VIS-${dateStr}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}`;
+
+            // ===== HEADER =====
+            doc.setFillColor(26, 26, 46);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('STORE VISIT CHECKLIST', 105, 12, { align: 'center' });
             doc.setFontSize(10);
-            doc.text(formNo, 105, 30, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.text('Area Supervisor Visit Report', 105, 19, { align: 'center' });
+            doc.setFontSize(9);
+            doc.text(formNo, 105, 26, { align: 'center' });
 
-            // Store Info
+            // ===== INFO BOX =====
+            let y = 38;
+            const areaInfo = getAreaForStore(storeName);
+            const areaName = areaInfo ? areaInfo.area : '';
+            const bmName = areaInfo && AREA_DATA[areaInfo.id] ? AREA_DATA[areaInfo.id].bm || '-' : '-';
+
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
+            doc.rect(15, y - 3, 180, 36);
+
             doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-            let y = 45;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Store:', 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(storeName, 35, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Date:', 120, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), 135, y);
-            y += 7;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Visitor:', 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(visitorName, 35, y);
+            doc.setFontSize(10);
 
-            // Visit Proof Info
+            // Row 1: Store & Tanggal
+            const labelX = 20;
+            const valueX = 55;
+            const labelX2 = 115;
+            const valueX2 = 150;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Store', labelX, y + 3);
+            doc.text(':', 50, y + 3);
+            doc.setFont('helvetica', 'normal');
+            doc.text(storeName, valueX, y + 3);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Tanggal', labelX2, y + 3);
+            doc.text(':', 145, y + 3);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(visitDate).toLocaleDateString('id-ID'), valueX2, y + 3);
+
+            // Row 2: Area Supervisor & Area
+            doc.setFont('helvetica', 'bold');
+            doc.text('Area Supervisor', labelX, y + 11);
+            doc.text(':', 50, y + 11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(visitorName, valueX, y + 11);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Area', labelX2, y + 11);
+            doc.text(':', 145, y + 11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(areaName, valueX2, y + 11);
+
+            // Row 3: BM & Check-in
+            doc.setFont('helvetica', 'bold');
+            doc.text('Branch Manager', labelX, y + 19);
+            doc.text(':', 50, y + 19);
+            doc.setFont('helvetica', 'normal');
+            doc.text(bmName, valueX, y + 19);
+
             if (visitProofData.timestamp) {
-                y += 7;
                 doc.setFont('helvetica', 'bold');
-                doc.text('Check-in:', 15, y);
+                doc.text('Check-in', labelX2, y + 19);
+                doc.text(':', 145, y + 19);
                 doc.setFont('helvetica', 'normal');
-                const checkInTime = new Date(visitProofData.timestamp);
-                doc.text(checkInTime.toLocaleString('id-ID'), 35, y);
+                doc.text(new Date(visitProofData.timestamp).toLocaleString('id-ID'), valueX2, y + 19);
             }
+
+            // Row 4: Lokasi (if available)
             if (visitProofData.location) {
                 doc.setFont('helvetica', 'bold');
-                doc.text('GPS:', 120, y);
+                doc.text('Lokasi', labelX, y + 27);
+                doc.text(':', 50, y + 27);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`${visitProofData.location.lat}, ${visitProofData.location.lng}`, 133, y);
+                const locText = visitProofData.location.address ?
+                    visitProofData.location.address.substring(0, 70) :
+                    `${visitProofData.location.lat}, ${visitProofData.location.lng}`;
+                doc.text(locText, valueX, y + 27);
             }
 
-            // Visit Proof Photo - small thumbnail
-            if (visitProofData.photo) {
-                try {
-                    doc.addImage(visitProofData.photo, 'JPEG', 15, 62, 25, 25);
-                    doc.setDrawColor(26, 26, 46);
-                    doc.rect(15, 62, 25, 25);
-                    doc.setFontSize(6);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('Bukti Visit', 27.5, 90, { align: 'center' });
-                } catch(e) { console.log('Error adding visit proof image'); }
-            }
+            // ===== SCORE SUMMARY BOX =====
+            y = 80;
+            const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
+            const scoreLabel = score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR';
 
-            // Score Box - hanya tampil untuk BM & Admin
-            if (currentUser.role !== 'as') {
-                const scoreColor = score >= 80 ? [40, 167, 69] : score >= 60 ? [255, 193, 7] : [220, 53, 69];
-                doc.setFillColor(...scoreColor);
-                doc.roundedRect(150, 50, 45, 25, 3, 3, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(20);
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${score}`, 172.5, 62, { align: 'center' });
-                doc.setFontSize(10);
-                doc.text(score >= 80 ? 'GOOD' : score >= 60 ? 'AVERAGE' : 'POOR', 172.5, 70, { align: 'center' });
-            }
+            // Score box
+            doc.setFillColor(...scoreColor);
+            doc.roundedRect(15, y, 35, 18, 2, 2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${score}%`, 32.5, y + 9, { align: 'center' });
+            doc.setFontSize(8);
+            doc.text(scoreLabel, 32.5, y + 15, { align: 'center' });
 
-            // Checklist
+            // Summary counts
             doc.setTextColor(0, 0, 0);
-            y = 90;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`YES: ${yesCount}`, 58, y + 7);
+            doc.text(`NO: ${noCount}`, 58, y + 14);
+            doc.text(`N/A: ${naCount}`, 85, y + 7);
+            doc.text(`Total: ${yesCount + noCount + naCount}`, 85, y + 14);
+
+            // ===== CHECKLIST TABLE =====
+            y = 103;
             const categories = [
                 { key: 'ambiance', name: 'STORE AMBIANCE' },
                 { key: 'display', name: 'DISPLAY' },
@@ -3191,64 +4904,77 @@
                 { key: 'stock', name: 'STOCK' }
             ];
 
-            categories.forEach(cat => {
-                if (y > 250) { doc.addPage(); y = 20; }
-                doc.setFillColor(15, 52, 96);
-                doc.rect(15, y, 180, 8, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text(cat.name, 20, y + 5.5);
-                y += 12;
+            const tableLeft = 15;
+            const tableWidth = 180;
+            const colNo = 12;
+            const colAnswer = 18;
+            const colText = tableWidth - colNo - colAnswer;
 
-                doc.setTextColor(0, 0, 0);
+            categories.forEach(cat => {
+                if (y > 250) { doc.addPage(); y = 15; }
+
+                // Category header
+                doc.setFillColor(15, 52, 96);
+                doc.rect(tableLeft, y, tableWidth, 7, 'F');
+                doc.setTextColor(255, 255, 255);
                 doc.setFontSize(9);
-                CHECKLIST_DATA[cat.key].forEach(item => {
-                    if (y > 270) { doc.addPage(); y = 20; }
+                doc.setFont('helvetica', 'bold');
+                doc.text(cat.name, tableLeft + 3, y + 5);
+                y += 7;
+
+                // Table header row
+                doc.setFillColor(240, 240, 240);
+                doc.rect(tableLeft, y, tableWidth, 6, 'F');
+                doc.setTextColor(80, 80, 80);
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'bold');
+                doc.text('No', tableLeft + 3, y + 4);
+                doc.text('Item Checklist', tableLeft + colNo + 3, y + 4);
+                doc.text('Status', tableLeft + tableWidth - 12, y + 4);
+                y += 6;
+
+                doc.setFontSize(8);
+                CHECKLIST_DATA[cat.key].forEach((item, idx) => {
+                    if (y > 275) { doc.addPage(); y = 15; }
+
                     const answer = checklistAnswers[item.no] || '-';
                     const answerText = answer === 'yes' ? 'YES' : answer === 'no' ? 'NO' : answer === 'na' ? 'N/A' : '-';
+                    const rowHeight = 6;
 
+                    // Alternating row color
+                    if (idx % 2 === 0) {
+                        doc.setFillColor(252, 252, 252);
+                        doc.rect(tableLeft, y, tableWidth, rowHeight, 'F');
+                    }
+
+                    // Row border
+                    doc.setDrawColor(220, 220, 220);
+                    doc.setLineWidth(0.2);
+                    doc.line(tableLeft, y + rowHeight, tableLeft + tableWidth, y + rowHeight);
+
+                    // No column
+                    doc.setTextColor(100, 100, 100);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`${item.no}`, tableLeft + 3, y + 4);
+
+                    // Text column (truncate if too long)
+                    doc.setTextColor(0, 0, 0);
+                    let itemText = item.text;
+                    if (itemText.length > 85) itemText = itemText.substring(0, 82) + '...';
+                    doc.text(itemText, tableLeft + colNo + 2, y + 4);
+
+                    // Answer column with color
                     if (answer === 'yes') doc.setTextColor(40, 167, 69);
                     else if (answer === 'no') doc.setTextColor(220, 53, 69);
-                    else doc.setTextColor(108, 117, 125);
-
+                    else doc.setTextColor(150, 150, 150);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(`${item.no}.`, 15, y);
-                    doc.text(answerText, 185, y, { align: 'right' });
+                    doc.text(answerText, tableLeft + tableWidth - 5, y + 4, { align: 'right' });
 
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont('helvetica', 'normal');
-                    const lines = doc.splitTextToSize(item.text, 150);
-                    doc.text(lines, 25, y);
-                    y += lines.length * 5 + 3;
-
-                    if (checklistRemarks[item.no]) {
-                        doc.setTextColor(100, 100, 100);
-                        doc.setFontSize(8);
-                        doc.text(`Remarks: ${checklistRemarks[item.no]}`, 25, y);
-                        y += 5;
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFontSize(9);
-                    }
+                    y += rowHeight;
                 });
-                y += 5;
-            });
 
-            // Comment
-            const comment = document.getElementById('commentImprovement').value.trim();
-            if (comment) {
-                if (y > 240) { doc.addPage(); y = 20; }
-                doc.setFillColor(255, 243, 205);
-                doc.rect(15, y, 180, 25, 'F');
-                doc.setTextColor(133, 100, 4);
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Comment Improvement:', 20, y + 6);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.text(doc.splitTextToSize(comment, 170), 20, y + 12);
-                y += 30;
-            }
+                y += 8;
+            });
 
             // Save archive
             const archive = JSON.parse(localStorage.getItem('visit_archive') || '[]');
@@ -3261,6 +4987,7 @@
                 remarks: { ...checklistRemarks },
                 photos: { ...checklistPhotos },
                 visitorName,
+                areaName,
                 comment,
                 visitProof: {
                     photo: visitProofData.photo,
@@ -3309,4 +5036,5 @@
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeArchive(); });
     </script>
 </body>
+<!-- Updated: 2026-01-06 22:40:00 -->
 </html>
